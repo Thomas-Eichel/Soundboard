@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Soundboard</string>
+    <string name="stop_all">Alle stoppen</string>
+    <string name="empty_hint">Tippe auf ein Feld, um einen Sound zu hinterlegen.\nTippe lange auf ein belegtes Feld, um es zu bearbeiten.</string>
+    <string name="add_sound">Sound hinzufügen</string>
+    <string name="edit_sound">Sound bearbeiten</string>
+    <string name="save">Speichern</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="delete">Löschen</string>
+    <string name="name_hint">Name des Buttons</string>
+    <string name="duration_hint">Abspieldauer in Sekunden (0 = komplette Datei)</string>
+    <string name="fade_label">Smooth ausblenden statt hart abbrechen</string>
+    <string name="pick_sound">Sound-Datei wählen (MP3)</string>
+    <string name="no_sound_picked">Noch keine Datei gewählt</string>
+    <string name="pick_sound_first">Bitte zuerst eine Sound-Datei wählen</string>
+</resources>

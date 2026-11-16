@@ -1,0 +1,11 @@
+package com.example.soundboard
+
+import android.net.Uri
+
+data class Sound(
+    val id: Long,
+    val name: String,
+    val uri: Uri?,
+    val durationSec: Double,
+    val fadeOut: Boolean
+)
