@@ -65,7 +65,11 @@ class MainActivity : AppCompatActivity() {
     private val exportProfile =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
             if (uri == null) return@registerForActivityResult
-            profileStore.export(uri, settings, sounds) { ok ->
+            profileStore.export(
+                uri,
+                settings.copy(categories = settings.categories.toMutableList()),
+                sounds.toList()
+            ) { ok ->
                 Toast.makeText(
                     this,
                     if (ok) R.string.profile_saved else R.string.profile_save_error,

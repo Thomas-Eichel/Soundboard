@@ -27,59 +27,69 @@ class ProfileStore(private val context: Context) {
     fun export(uri: Uri, settings: AppSettings, sounds: List<Sound>, onDone: (Boolean) -> Unit) {
         thread {
             val ok = try {
-                context.contentResolver.openOutputStream(uri)?.use { out ->
-                    ZipOutputStream(BufferedOutputStream(out)).use { zip ->
-                        val arr = JSONArray()
-                        sounds.forEachIndexed { slot, s ->
-                            var audioEntry: Any = JSONObject.NULL
-                            if (s.uri != null) {
-                                val input = openInput(s.uri)
-                                if (input != null) {
-                                    zip.putNextEntry(ZipEntry("audio/$slot.mp3"))
-                                    if (copyToZip(input, zip)) audioEntry = "audio/$slot.mp3"
-                                    zip.closeEntry()
-                                }
+                val tmp = File(context.filesDir, "export_tmp.zip")
+                tmp.delete()
+                ZipOutputStream(BufferedOutputStream(tmp.outputStream())).use { zip ->
+                    val arr = JSONArray()
+                    sounds.forEachIndexed { slot, s ->
+                        var audioEntry: Any = JSONObject.NULL
+                        if (s.uri != null) {
+                            val input = openInput(s.uri)
+                            if (input != null) {
+                                zip.putNextEntry(ZipEntry("audio/$slot.mp3"))
+                                if (copyToZip(input, zip)) audioEntry = "audio/$slot.mp3"
+                                zip.closeEntry()
                             }
-                            var imageEntry: Any = JSONObject.NULL
-                            if (s.imageUri != null) {
-                                val input = openInput(s.imageUri)
-                                if (input != null) {
-                                    zip.putNextEntry(ZipEntry("image/$slot.bin"))
-                                    if (copyToZip(input, zip)) imageEntry = "image/$slot.bin"
-                                    zip.closeEntry()
-                                }
-                            }
-                            arr.put(
-                                JSONObject()
-                                    .put("slot", slot)
-                                    .put("id", s.id)
-                                    .put("name", s.name)
-                                    .put("durationSec", s.durationSec)
-                                    .put("fadeOut", s.fadeOut)
-                                    .put("category1", s.category1 ?: "")
-                                    .put("category2", s.category2 ?: "")
-                                    .put("backgroundColor", s.backgroundColor ?: JSONObject.NULL)
-                                    .put("audioEntry", audioEntry)
-                                    .put("imageEntry", imageEntry)
-                            )
                         }
-                        val root = JSONObject()
-                        root.put("version", 1)
-                        root.put(
-                            "settings",
+                        var imageEntry: Any = JSONObject.NULL
+                        if (s.imageUri != null) {
+                            val input = openInput(s.imageUri)
+                            if (input != null) {
+                                zip.putNextEntry(ZipEntry("image/$slot.bin"))
+                                if (copyToZip(input, zip)) imageEntry = "image/$slot.bin"
+                                zip.closeEntry()
+                            }
+                        }
+                        arr.put(
                             JSONObject()
-                                .put("fadeMs", settings.fadeMs)
-                                .put("categories", JSONArray(settings.categories))
+                                .put("slot", slot)
+                                .put("id", s.id)
+                                .put("name", s.name)
+                                .put("durationSec", s.durationSec)
+                                .put("fadeOut", s.fadeOut)
+                                .put("category1", s.category1 ?: "")
+                                .put("category2", s.category2 ?: "")
+                                .put("backgroundColor", s.backgroundColor ?: JSONObject.NULL)
+                                .put("audioEntry", audioEntry)
+                                .put("imageEntry", imageEntry)
                         )
-                        root.put("sounds", arr)
-                        zip.putNextEntry(ZipEntry("profile.json"))
-                        zip.write(root.toString().toByteArray(Charsets.UTF_8))
-                        zip.closeEntry()
                     }
-                    true
-                } ?: run {
-                    Log.e(TAG, "export: openOutputStream returned null for $uri")
+                    val root = JSONObject()
+                    root.put("version", 1)
+                    root.put(
+                        "settings",
+                        JSONObject()
+                            .put("fadeMs", settings.fadeMs)
+                            .put("categories", JSONArray(settings.categories))
+                    )
+                    root.put("sounds", arr)
+                    zip.putNextEntry(ZipEntry("profile.json"))
+                    zip.write(root.toString().toByteArray(Charsets.UTF_8))
+                    zip.closeEntry()
+                }
+                if (tmp.length() <= 0) {
+                    Log.e(TAG, "export: temp zip is empty")
                     false
+                } else {
+                    val out = context.contentResolver.openOutputStream(uri)
+                    if (out == null) {
+                        Log.e(TAG, "export: openOutputStream returned null for $uri")
+                        false
+                    } else {
+                        out.use { o -> tmp.inputStream().use { it.copyTo(o) } }
+                        tmp.delete()
+                        true
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "export failed", e)

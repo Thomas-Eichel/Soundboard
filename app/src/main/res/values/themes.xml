@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Soundboard" parent="Theme.Material3.DayNight.NoActionBar" />
+    <style name="Theme.Soundboard" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand_red</item>
+        <item name="colorPrimaryVariant">@color/brand_red_dark</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="actionOverflowMenuStyle">@style/Widget.Soundboard.OverflowMenu</item>
+    </style>
+
+    <style name="Widget.Soundboard.OverflowMenu" parent="Widget.Material3.PopupMenu.Overflow">
+        <item name="android:popupBackground">@color/brand_red</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
 
 </resources>
