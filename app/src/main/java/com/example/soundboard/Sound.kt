@@ -9,5 +9,7 @@ data class Sound(
     val durationSec: Double,
     val fadeOut: Boolean,
     val category1: String? = null,
-    val category2: String? = null
+    val category2: String? = null,
+    val backgroundColor: String? = null,
+    val imageUri: Uri? = null
 )

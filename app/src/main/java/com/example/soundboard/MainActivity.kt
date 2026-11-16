@@ -1,12 +1,16 @@
 package com.example.soundboard
 
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,6 +32,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: SoundAdapter
 
     private var pickedUri: Uri? = null
+    private var dialogColor: String? = null
+    private var dialogImageUri: Uri? = null
     private var editDialog: DialogEditSoundBinding? = null
 
     private val pickAudio =
@@ -41,6 +47,19 @@ class MainActivity : AppCompatActivity() {
             }
             pickedUri = uri
             editDialog?.pickedFile?.text = displayName(uri)
+        }
+
+    private val pickImage =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            try {
+                contentResolver.takePersistableUriPermission(
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: SecurityException) {
+            }
+            dialogImageUri = uri
+            editDialog?.pickedImage?.text = displayName(uri)
         }
 
     private val exportProfile =
@@ -181,6 +200,19 @@ class MainActivity : AppCompatActivity() {
         setupCategorySpinner(dialogBinding.category1Spinner, categoryOptions, current.category1)
         setupCategorySpinner(dialogBinding.category2Spinner, categoryOptions, current.category2)
 
+        dialogColor = current.backgroundColor
+        dialogImageUri = current.imageUri
+        dialogBinding.pickedImage.text =
+            current.imageUri?.let { displayName(it) } ?: getString(R.string.no_image_picked)
+        rebuildColorRow(dialogBinding)
+        dialogBinding.pickImageButton.setOnClickListener {
+            pickImage.launch(arrayOf("image/*"))
+        }
+        dialogBinding.clearImageButton.setOnClickListener {
+            dialogImageUri = null
+            dialogBinding.pickedImage.text = getString(R.string.no_image_picked)
+        }
+
         val dialog = AlertDialog.Builder(this)
             .setTitle(if (current.uri == null) R.string.add_sound else R.string.edit_sound)
             .setView(dialogBinding.root)
@@ -219,7 +251,9 @@ class MainActivity : AppCompatActivity() {
                     durationSec = duration,
                     fadeOut = dialogBinding.fadeSwitch.isChecked,
                     category1 = selectedCategory(dialogBinding.category1Spinner, categoryOptions),
-                    category2 = selectedCategory(dialogBinding.category2Spinner, categoryOptions)
+                    category2 = selectedCategory(dialogBinding.category2Spinner, categoryOptions),
+                    backgroundColor = dialogColor,
+                    imageUri = dialogImageUri
                 )
                 persist()
                 adapter.notifyItemChanged(slot)
@@ -228,6 +262,31 @@ class MainActivity : AppCompatActivity() {
         }
         dialog.setOnDismissListener { editDialog = null }
         dialog.show()
+    }
+
+    private fun rebuildColorRow(dialogBinding: DialogEditSoundBinding) {
+        dialogBinding.colorRow.removeAllViews()
+        val density = resources.displayMetrics.density
+        (listOf<String?>(null) + PRESET_COLORS).forEach { hex ->
+            val swatch = View(this).apply {
+                val size = (44 * density).toInt()
+                val margin = (10 * density).toInt()
+                layoutParams = LinearLayout.LayoutParams(size, size).apply { marginEnd = margin }
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(if (hex == null) Color.TRANSPARENT else Color.parseColor(hex))
+                    setStroke(
+                        (3 * density).toInt(),
+                        if (hex == dialogColor) Color.BLACK else Color.LTGRAY
+                    )
+                }
+                setOnClickListener {
+                    dialogColor = hex
+                    rebuildColorRow(dialogBinding)
+                }
+            }
+            dialogBinding.colorRow.addView(swatch)
+        }
     }
 
     private fun setupCategorySpinner(spinner: Spinner, options: List<String>, current: String?) {
@@ -264,5 +323,9 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val GRID_COLUMNS = 3
+        private val PRESET_COLORS = listOf(
+            "#F44336", "#FF9800", "#FFEB3B", "#4CAF50", "#009688",
+            "#2196F3", "#673AB7", "#E91E63", "#795548", "#607D8B"
+        )
     }
 }

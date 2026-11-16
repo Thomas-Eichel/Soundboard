@@ -41,6 +41,7 @@ darauf hart gestoppt; ist "Smooth ausblenden" aktiv, startet in den letzten
 
 - Menue **Einstellungen** (`SettingsActivity`): zentrale Liste der Kategorien verwalten (hinzufuegen / umbenennen / loeschen — Aenderungen werden auf alle Sounds uebernommen) sowie globale **Fade-Out-Dauer** in ms
 - Pro Sound koennen im Bearbeiten-Dialog **zwei Kategorien** aus der zentralen Liste vergeben werden; sie werden auf der Kachel angezeigt
+- **Kachel-Design pro Sound**: Akzentfarbe (Preset-Farbwähler) oder Grafikdatei (Bild), Text wird bei Grafik weiss; im Profil-ZIP enthalten (`backgroundColor` + `image/<slot>.bin`)
 - Menue **Profil exportieren / Profil laden**: komplettes Profil als eine ZIP-Datei (`soundboard-profil.zip`) ueber den System-Dateidialog. Inhalt: `profile.json` (Version, Einstellungen, alle 12 Slots mit Name/Dauer/Fade/Kategorien) + `audio/<slot>.mp3` (eingebettete Audiodaten). Beim Laden werden die MP3s ins app-private Verzeichnis entpackt — das Profil ist damit geraeteuebergreifend nutzbar
 - Gerade abgespielter Sound wird auf seiner Kachel farblich hervorgehoben (Rand)
 

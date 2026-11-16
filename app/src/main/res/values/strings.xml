@@ -33,4 +33,8 @@
     <string name="no_categories_yet">Noch keine Kategorien</string>
     <string name="fade_ms_label">Fade-Out-Dauer</string>
     <string name="fade_ms_hint">Fade-Dauer in Millisekunden</string>
+    <string name="design_label">Kachel-Design (Farbe oder Grafik)</string>
+    <string name="pick_image">Grafik wählen</string>
+    <string name="clear_image">Grafik entfernen</string>
+    <string name="no_image_picked">Keine Grafik gewählt</string>
 </resources>

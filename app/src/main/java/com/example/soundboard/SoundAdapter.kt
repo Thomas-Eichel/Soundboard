@@ -1,5 +1,6 @@
 package com.example.soundboard
 
+import android.graphics.Color
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -34,16 +35,43 @@ class SoundAdapter(
         val categories = listOfNotNull(sound.category1, sound.category2).joinToString(", ")
         holder.binding.buttonCategories.text = categories
         holder.binding.buttonCategories.isVisible = categories.isNotEmpty()
+
+        val theme = holder.itemView.context.theme
+        val hasImage = sound.imageUri != null
+        if (hasImage) {
+            holder.binding.buttonImage.isVisible = true
+            holder.binding.buttonImage.setImageURI(sound.imageUri)
+        } else {
+            holder.binding.buttonImage.setImageDrawable(null)
+            holder.binding.buttonImage.isVisible = false
+        }
+        val textColor = if (hasImage) {
+            Color.WHITE
+        } else {
+            val tv = TypedValue()
+            theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurface, tv, true)
+            tv.data
+        }
+        holder.binding.buttonName.setTextColor(textColor)
+        holder.binding.buttonCategories.setTextColor(textColor)
+
+        if (sound.backgroundColor != null) {
+            holder.binding.root.setCardBackgroundColor(Color.parseColor(sound.backgroundColor))
+        } else {
+            val tv = TypedValue()
+            theme.resolveAttribute(com.google.android.material.R.attr.colorSurface, tv, true)
+            holder.binding.root.setCardBackgroundColor(tv.data)
+        }
+
         if (sound.id == playingId) {
             val tv = TypedValue()
-            holder.itemView.context.theme.resolveAttribute(
-                androidx.appcompat.R.attr.colorPrimary, tv, true
-            )
+            theme.resolveAttribute(androidx.appcompat.R.attr.colorPrimary, tv, true)
             holder.binding.root.setStrokeColor(tv.data)
             holder.binding.root.setStrokeWidth(6)
         } else {
             holder.binding.root.setStrokeWidth(0)
         }
+
         holder.itemView.setOnClickListener { onClick(holder.bindingAdapterPosition) }
         holder.itemView.setOnLongClickListener {
             onLongClick(holder.bindingAdapterPosition)

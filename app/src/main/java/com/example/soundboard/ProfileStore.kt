@@ -36,6 +36,13 @@ class ProfileStore(private val context: Context) {
                                 }
                                 zip.closeEntry()
                             }
+                            if (s.imageUri != null) {
+                                zip.putNextEntry(ZipEntry("image/$slot.bin"))
+                                context.contentResolver.openInputStream(s.imageUri)?.use { input ->
+                                    input.copyTo(zip)
+                                }
+                                zip.closeEntry()
+                            }
                         }
                         val root = JSONObject()
                         root.put("version", 1)
@@ -56,9 +63,14 @@ class ProfileStore(private val context: Context) {
                                     .put("fadeOut", s.fadeOut)
                                     .put("category1", s.category1 ?: "")
                                     .put("category2", s.category2 ?: "")
+                                    .put("backgroundColor", s.backgroundColor ?: JSONObject.NULL)
                                     .put(
                                         "audioEntry",
                                         if (s.uri != null) "audio/$slot.mp3" else JSONObject.NULL
+                                    )
+                                    .put(
+                                        "imageEntry",
+                                        if (s.imageUri != null) "image/$slot.bin" else JSONObject.NULL
                                     )
                             )
                         }
@@ -80,8 +92,11 @@ class ProfileStore(private val context: Context) {
         thread {
             val result = try {
                 val dir = File(context.filesDir, "profile_sounds")
+                val imageDir = File(context.filesDir, "profile_images")
                 dir.deleteRecursively()
+                imageDir.deleteRecursively()
                 dir.mkdirs()
+                imageDir.mkdirs()
                 var root: JSONObject? = null
                 context.contentResolver.openInputStream(uri)?.use { input ->
                     ZipInputStream(BufferedInputStream(input)).use { zip ->
@@ -92,6 +107,10 @@ class ProfileStore(private val context: Context) {
                                     root = JSONObject(zip.readBytes().toString(Charsets.UTF_8))
                                 entry.name.startsWith("audio/") -> {
                                     val f = File(dir, entry.name.substringAfter('/'))
+                                    f.outputStream().use { zip.copyTo(it) }
+                                }
+                                entry.name.startsWith("image/") -> {
+                                    val f = File(imageDir, entry.name.substringAfter('/'))
                                     f.outputStream().use { zip.copyTo(it) }
                                 }
                             }
@@ -120,6 +139,9 @@ class ProfileStore(private val context: Context) {
                     val audioEntry = o.optString("audioEntry")
                     val file =
                         if (audioEntry.isNotEmpty()) File(dir, audioEntry.substringAfter('/')) else null
+                    val imageEntry = o.optString("imageEntry")
+                    val imageFile =
+                        if (imageEntry.isNotEmpty()) File(imageDir, imageEntry.substringAfter('/')) else null
                     slots[slot] = Sound(
                         id = o.getLong("id"),
                         name = o.getString("name"),
@@ -127,7 +149,9 @@ class ProfileStore(private val context: Context) {
                         durationSec = o.optDouble("durationSec", 0.0),
                         fadeOut = o.optBoolean("fadeOut", true),
                         category1 = o.optString("category1").ifEmpty { null },
-                        category2 = o.optString("category2").ifEmpty { null }
+                        category2 = o.optString("category2").ifEmpty { null },
+                        backgroundColor = o.optString("backgroundColor").ifEmpty { null },
+                        imageUri = if (imageFile != null && imageFile.exists()) Uri.fromFile(imageFile) else null
                     )
                 }
                 ProfileResult(settings, slots)

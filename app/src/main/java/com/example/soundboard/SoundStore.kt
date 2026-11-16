@@ -27,7 +27,11 @@ class SoundStore(context: Context) {
                 durationSec = o.optDouble("durationSec", 0.0),
                 fadeOut = o.optBoolean("fadeOut", true),
                 category1 = o.optString("category1").ifEmpty { null },
-                category2 = o.optString("category2").ifEmpty { null }
+                category2 = o.optString("category2").ifEmpty { null },
+                backgroundColor = o.optString("backgroundColor").ifEmpty { null },
+                imageUri = o.optString("imageUri").let {
+                    if (it.isNotEmpty()) Uri.parse(it) else null
+                }
             )
         }
     }
@@ -44,6 +48,8 @@ class SoundStore(context: Context) {
                     .put("fadeOut", s.fadeOut)
                     .put("category1", s.category1 ?: "")
                     .put("category2", s.category2 ?: "")
+                    .put("backgroundColor", s.backgroundColor ?: "")
+                    .put("imageUri", s.imageUri?.toString() ?: "")
             )
         }
         prefs.edit().putString(KEY_SOUNDS, arr.toString()).apply()
