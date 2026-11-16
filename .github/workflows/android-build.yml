@@ -32,10 +32,21 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Diagnose resolved dependencies
+      - name: Diagnose AAR transforms and AAPT2 link inputs
         run: |
-          gradle :app:dependencies --configuration debugRuntimeClasspath > /tmp/deps.txt 2>&1 || true
-          grep -nE 'com.google.android.material|appcompat|recyclerview|core-ktx|Could not|FAILED' /tmp/deps.txt | head -40 || echo "NO_MATCHES"
+          echo "=== exploded material AAR values ==="
+          find ~/.gradle/caches -path '*material-1.12.0*' -name 'values.xml' 2>/dev/null | head -5 || true
+          f=$(find ~/.gradle/caches -path '*material-1.12.0*' -name 'values.xml' 2>/dev/null | head -1)
+          if [ -n "$f" ]; then
+            grep -c 'Theme.Material3.DayNight.DarkActionBar' "$f" || echo "THEME_NOT_IN_MATERIAL_VALUES"
+          else
+            echo "NO_MATERIAL_VALUES_XML_IN_CACHE"
+          fi
+          echo "=== aapt2 link command ==="
+          gradle :app:processDebugResources --info > /tmp/aapt.log 2>&1 || true
+          grep -iE 'aapt2.*link' /tmp/aapt.log | head -2 | cut -c1-3000
+          echo "=== material mentions in aapt log ==="
+          grep -c 'material-1.12.0' /tmp/aapt.log || true
 
       - name: Build debug APK
         run: gradle :app:assembleDebug --no-daemon
