@@ -5,7 +5,10 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.OpenableColumns
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -13,6 +16,8 @@ import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.Toast
+import java.io.File
+import kotlin.concurrent.thread
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -36,30 +41,34 @@ class MainActivity : AppCompatActivity() {
     private var dialogImageUri: Uri? = null
     private var editDialog: DialogEditSoundBinding? = null
 
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     private val pickAudio =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri == null) return@registerForActivityResult
-            try {
-                contentResolver.takePersistableUriPermission(
-                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-            } catch (_: SecurityException) {
+            val label = displayName(uri)
+            copyPickedToPrivate(uri, "audio") { local ->
+                if (local != null) {
+                    pickedUri = local
+                    editDialog?.pickedFile?.text = label
+                } else {
+                    Toast.makeText(this, R.string.copy_failed, Toast.LENGTH_LONG).show()
+                }
             }
-            pickedUri = uri
-            editDialog?.pickedFile?.text = displayName(uri)
         }
 
     private val pickImage =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri == null) return@registerForActivityResult
-            try {
-                contentResolver.takePersistableUriPermission(
-                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-            } catch (_: SecurityException) {
+            val label = displayName(uri)
+            copyPickedToPrivate(uri, "image") { local ->
+                if (local != null) {
+                    dialogImageUri = local
+                    editDialog?.pickedImage?.text = label
+                } else {
+                    Toast.makeText(this, R.string.copy_failed, Toast.LENGTH_LONG).show()
+                }
             }
-            dialogImageUri = uri
-            editDialog?.pickedImage?.text = displayName(uri)
         }
 
     private val exportProfile =
@@ -90,6 +99,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
                 } else {
+                    player.stop()
                     settings = result.settings
                     store.saveSettings(settings)
                     player.fadeMs = settings.fadeMs
@@ -122,6 +132,7 @@ class MainActivity : AppCompatActivity() {
         while (sounds.size < SoundStore.GRID_SIZE) {
             sounds.add(newEmptySound(sounds.size))
         }
+        migrateContentUrisToPrivate()
 
         adapter = SoundAdapter(
             sounds,
@@ -205,6 +216,59 @@ class MainActivity : AppCompatActivity() {
     private fun newEmptySound(slot: Int) =
         Sound(System.currentTimeMillis() + slot, "", null, 0.0, true, null, null)
 
+    private fun copyPickedToPrivate(uri: Uri, prefix: String, onDone: (Uri?) -> Unit) {
+        thread {
+            val local = copyToPrivateSync(uri, prefix)
+            mainHandler.post { onDone(local) }
+        }
+    }
+
+    private fun copyToPrivateSync(uri: Uri, prefix: String): Uri? {
+        return try {
+            val dir = File(filesDir, "media")
+            dir.mkdirs()
+            val name = displayName(uri).replace(Regex("[^A-Za-z0-9._-]"), "_")
+            val target = File(dir, "${prefix}_${System.currentTimeMillis()}_$name")
+            contentResolver.openInputStream(uri)?.use { input ->
+                target.outputStream().use { input.copyTo(it) }
+            }
+            if (target.length() > 0) Uri.fromFile(target) else null
+        } catch (e: Exception) {
+            Log.e(TAG, "copyToPrivateSync failed for $uri", e)
+            null
+        }
+    }
+
+    private fun migrateContentUrisToPrivate() {
+        var dirty = false
+        for (i in sounds.indices) {
+            val s = sounds[i]
+            var newUri = s.uri
+            var newImage = s.imageUri
+            if (s.uri?.scheme == "content") {
+                copyToPrivateSync(s.uri, "audio")?.let { newUri = it }
+            }
+            if (s.imageUri?.scheme == "content") {
+                copyToPrivateSync(s.imageUri, "image")?.let { newImage = it }
+            }
+            if (newUri != s.uri || newImage != s.imageUri) {
+                sounds[i] = s.copy(uri = newUri, imageUri = newImage)
+                dirty = true
+            }
+        }
+        if (dirty) store.save(sounds)
+    }
+
+    private fun deletePrivateMedia(uri: Uri?) {
+        val u = uri ?: return
+        if (u.scheme == "file") {
+            val path = u.path ?: return
+            if (path.startsWith(File(filesDir, "media").absolutePath)) {
+                File(path).delete()
+            }
+        }
+    }
+
     private fun showEditDialog(slot: Int) {
         val current = sounds[slot]
         pickedUri = null
@@ -243,6 +307,8 @@ class MainActivity : AppCompatActivity() {
             .apply {
                 if (current.uri != null) {
                     setNeutralButton(R.string.delete) { _, _ ->
+                        deletePrivateMedia(current.uri)
+                        deletePrivateMedia(current.imageUri)
                         sounds[slot] = newEmptySound(slot)
                         persist()
                         adapter.notifyItemChanged(slot)
@@ -266,6 +332,8 @@ class MainActivity : AppCompatActivity() {
                     .ifEmpty { displayName(uri) }
                 val duration = dialogBinding.durationInput.text.toString()
                     .replace(',', '.').toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
+                if (uri != current.uri) deletePrivateMedia(current.uri)
+                if (dialogImageUri != current.imageUri) deletePrivateMedia(current.imageUri)
                 sounds[slot] = Sound(
                     id = current.id,
                     name = name,
@@ -344,6 +412,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val TAG = "MainActivity"
         private const val GRID_COLUMNS = 3
         private val PRESET_COLORS = listOf(
             "#F44336", "#FF9800", "#FFEB3B", "#4CAF50", "#009688",

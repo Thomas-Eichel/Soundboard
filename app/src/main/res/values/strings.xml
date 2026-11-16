@@ -39,4 +39,5 @@
     <string name="pick_image">Grafik wählen</string>
     <string name="clear_image">Grafik entfernen</string>
     <string name="no_image_picked">Keine Grafik gewählt</string>
+    <string name="copy_failed">Datei konnte nicht gelesen werden — bitte erneut wählen</string>
 </resources>
