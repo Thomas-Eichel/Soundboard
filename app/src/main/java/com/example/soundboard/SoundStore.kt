@@ -6,7 +6,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 data class AppSettings(
-    val fadeMs: Long = DEFAULT_FADE_MS,
+    var fadeMs: Long = SoundStore.DEFAULT_FADE_MS,
     val categories: MutableList<String> = mutableListOf()
 )
 
