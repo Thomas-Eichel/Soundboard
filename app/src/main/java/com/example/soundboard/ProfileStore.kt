@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedInputStream
@@ -28,32 +29,26 @@ class ProfileStore(private val context: Context) {
             val ok = try {
                 context.contentResolver.openOutputStream(uri)?.use { out ->
                     ZipOutputStream(BufferedOutputStream(out)).use { zip ->
-                        sounds.forEachIndexed { slot, s ->
-                            if (s.uri != null) {
-                                zip.putNextEntry(ZipEntry("audio/$slot.mp3"))
-                                context.contentResolver.openInputStream(s.uri)?.use { input ->
-                                    input.copyTo(zip)
-                                }
-                                zip.closeEntry()
-                            }
-                            if (s.imageUri != null) {
-                                zip.putNextEntry(ZipEntry("image/$slot.bin"))
-                                context.contentResolver.openInputStream(s.imageUri)?.use { input ->
-                                    input.copyTo(zip)
-                                }
-                                zip.closeEntry()
-                            }
-                        }
-                        val root = JSONObject()
-                        root.put("version", 1)
-                        root.put(
-                            "settings",
-                            JSONObject()
-                                .put("fadeMs", settings.fadeMs)
-                                .put("categories", JSONArray(settings.categories))
-                        )
                         val arr = JSONArray()
                         sounds.forEachIndexed { slot, s ->
+                            var audioEntry: Any = JSONObject.NULL
+                            if (s.uri != null) {
+                                val input = openInput(s.uri)
+                                if (input != null) {
+                                    zip.putNextEntry(ZipEntry("audio/$slot.mp3"))
+                                    if (copyToZip(input, zip)) audioEntry = "audio/$slot.mp3"
+                                    zip.closeEntry()
+                                }
+                            }
+                            var imageEntry: Any = JSONObject.NULL
+                            if (s.imageUri != null) {
+                                val input = openInput(s.imageUri)
+                                if (input != null) {
+                                    zip.putNextEntry(ZipEntry("image/$slot.bin"))
+                                    if (copyToZip(input, zip)) imageEntry = "image/$slot.bin"
+                                    zip.closeEntry()
+                                }
+                            }
                             arr.put(
                                 JSONObject()
                                     .put("slot", slot)
@@ -64,33 +59,41 @@ class ProfileStore(private val context: Context) {
                                     .put("category1", s.category1 ?: "")
                                     .put("category2", s.category2 ?: "")
                                     .put("backgroundColor", s.backgroundColor ?: JSONObject.NULL)
-                                    .put(
-                                        "audioEntry",
-                                        if (s.uri != null) "audio/$slot.mp3" else JSONObject.NULL
-                                    )
-                                    .put(
-                                        "imageEntry",
-                                        if (s.imageUri != null) "image/$slot.bin" else JSONObject.NULL
-                                    )
+                                    .put("audioEntry", audioEntry)
+                                    .put("imageEntry", imageEntry)
                             )
                         }
+                        val root = JSONObject()
+                        root.put("version", 1)
+                        root.put(
+                            "settings",
+                            JSONObject()
+                                .put("fadeMs", settings.fadeMs)
+                                .put("categories", JSONArray(settings.categories))
+                        )
                         root.put("sounds", arr)
                         zip.putNextEntry(ZipEntry("profile.json"))
                         zip.write(root.toString().toByteArray(Charsets.UTF_8))
                         zip.closeEntry()
                     }
                     true
-                } ?: false
-            } catch (_: Exception) {
+                } ?: run {
+                    Log.e(TAG, "export: openOutputStream returned null for $uri")
+                    false
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "export failed", e)
                 false
             }
             mainHandler.post { onDone(ok) }
         }
     }
 
-    fun import(uri: Uri, onResult: (ProfileResult?) -> Unit) {
+    fun import(uri: Uri, onResult: (ProfileResult?, String?) -> Unit) {
         thread {
-            val result = try {
+            var result: ProfileResult? = null
+            var error: String? = null
+            try {
                 val dir = File(context.filesDir, "profile_sounds")
                 val imageDir = File(context.filesDir, "profile_images")
                 dir.deleteRecursively()
@@ -118,7 +121,7 @@ class ProfileStore(private val context: Context) {
                         }
                     }
                 }
-                val json = root ?: error("profile.json fehlt")
+                val json = root ?: error("profile.json fehlt oder ZIP ist keine Profildatei")
                 val settingsObj = json.getJSONObject("settings")
                 val categories = mutableListOf<String>()
                 settingsObj.optJSONArray("categories")?.let { arr ->
@@ -145,20 +148,45 @@ class ProfileStore(private val context: Context) {
                     slots[slot] = Sound(
                         id = o.getLong("id"),
                         name = o.getString("name"),
-                        uri = if (file != null && file.exists()) Uri.fromFile(file) else null,
+                        uri = if (file != null && file.exists() && file.length() > 0) {
+                            Uri.fromFile(file)
+                        } else null,
                         durationSec = o.optDouble("durationSec", 0.0),
                         fadeOut = o.optBoolean("fadeOut", true),
                         category1 = o.optString("category1").ifEmpty { null },
                         category2 = o.optString("category2").ifEmpty { null },
                         backgroundColor = o.optString("backgroundColor").ifEmpty { null },
-                        imageUri = if (imageFile != null && imageFile.exists()) Uri.fromFile(imageFile) else null
+                        imageUri = if (imageFile != null && imageFile.exists() && imageFile.length() > 0) {
+                            Uri.fromFile(imageFile)
+                        } else null
                     )
                 }
-                ProfileResult(settings, slots)
-            } catch (_: Exception) {
-                null
+                result = ProfileResult(settings, slots)
+            } catch (e: Exception) {
+                Log.e(TAG, "import failed", e)
+                error = e.message ?: e.javaClass.simpleName
             }
-            mainHandler.post { onResult(result) }
+            mainHandler.post { onResult(result, error) }
         }
+    }
+
+    private fun openInput(uri: Uri) = try {
+        context.contentResolver.openInputStream(uri)
+    } catch (e: Exception) {
+        Log.e(TAG, "openInput failed for $uri", e)
+        null
+    }
+
+    private fun copyToZip(input: java.io.InputStream, zip: ZipOutputStream): Boolean {
+        return try {
+            input.use { it.copyTo(zip) > 0 }
+        } catch (e: Exception) {
+            Log.e(TAG, "copyToZip failed", e)
+            false
+        }
+    }
+
+    companion object {
+        private const val TAG = "ProfileStore"
     }
 }

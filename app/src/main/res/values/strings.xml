@@ -9,6 +9,7 @@
     <string name="profile_save_error">Fehler beim Speichern des Profils</string>
     <string name="profile_loaded">Profil geladen</string>
     <string name="profile_load_error">Fehler beim Laden des Profils</string>
+    <string name="profile_load_error_detail">Fehler beim Laden des Profils: %1$s</string>
     <string name="empty_hint">Tippe auf ein Feld, um einen Sound zu hinterlegen.\nTippe lange auf ein belegtes Feld, um es zu bearbeiten.</string>
     <string name="add_sound">Sound hinzufügen</string>
     <string name="edit_sound">Sound bearbeiten</string>

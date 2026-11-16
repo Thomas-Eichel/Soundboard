@@ -77,9 +77,14 @@ class MainActivity : AppCompatActivity() {
     private val importProfile =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri == null) return@registerForActivityResult
-            profileStore.import(uri) { result ->
+            profileStore.import(uri) { result, error ->
                 if (result == null) {
-                    Toast.makeText(this, R.string.profile_load_error, Toast.LENGTH_SHORT).show()
+                    val msg = if (error != null) {
+                        getString(R.string.profile_load_error_detail, error)
+                    } else {
+                        getString(R.string.profile_load_error)
+                    }
+                    Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
                 } else {
                     settings = result.settings
                     store.saveSettings(settings)
@@ -168,7 +173,13 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.action_import_profile -> {
-                importProfile.launch(arrayOf("application/zip"))
+                importProfile.launch(
+                    arrayOf(
+                        "application/zip",
+                        "application/x-zip-compressed",
+                        "application/octet-stream"
+                    )
+                )
                 true
             }
             else -> super.onOptionsItemSelected(item)
