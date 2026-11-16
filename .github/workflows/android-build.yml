@@ -32,6 +32,11 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0"
 
+      - name: Diagnose resolved dependencies
+        run: |
+          gradle :app:dependencies --configuration debugRuntimeClasspath > /tmp/deps.txt 2>&1 || true
+          grep -nE 'com.google.android.material|appcompat|recyclerview|core-ktx|Could not|FAILED' /tmp/deps.txt | head -40 || echo "NO_MATCHES"
+
       - name: Build debug APK
         run: gradle :app:assembleDebug --no-daemon
 
