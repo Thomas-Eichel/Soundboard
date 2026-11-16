@@ -35,6 +35,7 @@ darauf hart gestoppt; ist "Smooth ausblenden" aktiv, startet in den letzten
 1. Projekt in **Android Studio** oeffnen (laedt Gradle-Wrapper automatisch)
 2. Auf Geraet mit Android 8.0+ deployen (Run-Button)
 3. MP3s z. B. unter `Downloads` ablegen und in der App auswaehlen
+4. Release-APK (minifiziert via R8 + Ressource-Shrinking): `gradle :app:assembleRelease` oder Android Studio: Build > Generate Signed Bundle / APK
 
 ## Projektstruktur
 

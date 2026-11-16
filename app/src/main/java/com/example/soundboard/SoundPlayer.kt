@@ -77,8 +77,8 @@ class SoundPlayer(private val context: Context) {
         requestFocus()
         current = sound
         fading = false
-        val p = MediaPlayer()
-        player = p
+        val p = player ?: MediaPlayer().also { player = it }
+        p.reset()
         p.setAudioAttributes(
             AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -102,6 +102,19 @@ class SoundPlayer(private val context: Context) {
 
     fun stop() {
         stopInternal()
+    }
+
+    fun release() {
+        handler.removeCallbacks(watchdog)
+        handler.removeCallbacks(fadeRunnable)
+        player?.release()
+        player = null
+        focusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+        focusRequest = null
+        current = null
+        fading = false
+        fadeSteps = 0
+        fadeStepIndex = 0
     }
 
     private fun requestFocus() {
@@ -147,9 +160,11 @@ class SoundPlayer(private val context: Context) {
                 if (it.isPlaying) it.stop()
             } catch (_: Exception) {
             }
-            it.release()
+            try {
+                it.reset()
+            } catch (_: Exception) {
+            }
         }
-        player = null
         focusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
         focusRequest = null
         current = null

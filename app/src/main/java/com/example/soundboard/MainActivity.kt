@@ -64,6 +64,7 @@ class MainActivity : AppCompatActivity() {
                 if (pos >= 0 && pos < sounds.size) showEditDialog(pos)
             }
         )
+        binding.recyclerView.setHasFixedSize(true)
         binding.recyclerView.layoutManager = GridLayoutManager(this, GRID_COLUMNS)
         binding.recyclerView.adapter = adapter
         updateEmptyView()
@@ -83,7 +84,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        player.stop()
+        player.release()
         super.onDestroy()
     }
 
