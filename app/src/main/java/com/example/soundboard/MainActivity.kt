@@ -97,6 +97,7 @@ class MainActivity : AppCompatActivity() {
                     sounds.addAll(result.sounds)
                     store.save(sounds)
                     adapter.playingId = null
+                    binding.stopButton.isEnabled = false
                     adapter.notifyDataSetChanged()
                     updateEmptyView()
                     Toast.makeText(this, R.string.profile_loaded, Toast.LENGTH_SHORT).show()
@@ -130,13 +131,18 @@ class MainActivity : AppCompatActivity() {
                 if (s.uri != null) {
                     player.play(s)
                     adapter.playingId = s.id
+                    binding.stopButton.isEnabled = true
                 } else showEditDialog(pos)
             },
             onLongClick = { pos ->
                 if (pos >= 0 && pos < sounds.size) showEditDialog(pos)
             }
         )
-        player.onStopped = { adapter.playingId = null }
+        player.onStopped = {
+            adapter.playingId = null
+            binding.stopButton.isEnabled = false
+        }
+        binding.stopButton.setOnClickListener { player.stopWithQuickFade() }
 
         binding.recyclerView.setHasFixedSize(true)
         binding.recyclerView.layoutManager = GridLayoutManager(this, GRID_COLUMNS)
@@ -153,6 +159,7 @@ class MainActivity : AppCompatActivity() {
         while (sounds.size < SoundStore.GRID_SIZE) {
             sounds.add(newEmptySound(sounds.size))
         }
+        binding.stopButton.isEnabled = false
         adapter.notifyDataSetChanged()
         updateEmptyView()
     }

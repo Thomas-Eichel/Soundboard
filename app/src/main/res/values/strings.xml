@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">Soundboard</string>
     <string name="stop_all">Alle stoppen</string>
+    <string name="stop_now">STOP</string>
     <string name="settings">Einstellungen</string>
     <string name="export_profile">Profil exportieren…</string>
     <string name="import_profile">Profil laden…</string>

@@ -111,6 +111,20 @@ class SoundPlayer(private val context: Context) {
         stopInternal()
     }
 
+    fun stopWithQuickFade() {
+        if (current == null) return
+        if (fading) {
+            stopInternal()
+            return
+        }
+        handler.removeCallbacks(watchdog)
+        handler.removeCallbacks(fadeRunnable)
+        fading = true
+        fadeSteps = (QUICK_FADE_MS / FADE_STEP_MS).toInt().coerceAtLeast(1)
+        fadeStepIndex = 0
+        handler.post(fadeRunnable)
+    }
+
     fun release() {
         handler.removeCallbacks(watchdog)
         handler.removeCallbacks(fadeRunnable)
@@ -186,6 +200,7 @@ class SoundPlayer(private val context: Context) {
         private const val DEFAULT_FADE_MS = 500L
         private const val FADE_STEP_MS = 25L
         private const val WATCHDOG_INTERVAL_MS = 50L
+        private const val QUICK_FADE_MS = 120L
         private const val DUCK_VOLUME = 0.2f
     }
 }
