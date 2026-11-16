@@ -37,9 +37,18 @@ darauf hart gestoppt; ist "Smooth ausblenden" aktiv, startet in den letzten
 3. MP3s z. B. unter `Downloads` ablegen und in der App auswaehlen
 4. Release-APK (minifiziert via R8 + Ressource-Shrinking): `gradle :app:assembleRelease` oder Android Studio: Build > Generate Signed Bundle / APK
 
+## Einstellungen, Kategorien und Profile
+
+- Menue **Einstellungen** (`SettingsActivity`): zentrale Liste der Kategorien verwalten (hinzufuegen / umbenennen / loeschen — Aenderungen werden auf alle Sounds uebernommen) sowie globale **Fade-Out-Dauer** in ms
+- Pro Sound koennen im Bearbeiten-Dialog **zwei Kategorien** aus der zentralen Liste vergeben werden; sie werden auf der Kachel angezeigt
+- Menue **Profil exportieren / Profil laden**: komplettes Profil als eine ZIP-Datei (`soundboard-profil.zip`) ueber den System-Dateidialog. Inhalt: `profile.json` (Version, Einstellungen, alle 12 Slots mit Name/Dauer/Fade/Kategorien) + `audio/<slot>.mp3` (eingebettete Audiodaten). Beim Laden werden die MP3s ins app-private Verzeichnis entpackt — das Profil ist damit geraeteuebergreifend nutzbar
+- Gerade abgespielter Sound wird auf seiner Kachel farblich hervorgehoben (Rand)
+
 ## Projektstruktur
 
-- `MainActivity.kt` – UI, Dateiauswahl, Bearbeiten-Dialog, Persistenz
+- `MainActivity.kt` – UI, Dateiauswahl, Bearbeiten-Dialog, Profil-Import/Export
+- `SettingsActivity.kt` – zentrale Kategorien + globale Fade-Dauer
+- `ProfileStore.kt` – Profil als ZIP (JSON + eingebettete MP3s) exportieren/laden
 - `SoundPlayer.kt` – MediaPlayer + AudioFocus + Dauerlimit/Fade-Out
-- `SoundStore.kt` – Speicherung der Konfiguration in SharedPreferences (JSON)
-- `SoundAdapter.kt` – RecyclerView-Adapter fuer die Button-Kacheln
+- `SoundStore.kt` – Speicherung von Sounds + Einstellungen in SharedPreferences (JSON)
+- `SoundAdapter.kt` – RecyclerView-Adapter fuer die Button-Kacheln inkl. Kategorie-Anzeige

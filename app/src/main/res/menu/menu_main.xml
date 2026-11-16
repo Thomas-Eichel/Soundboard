@@ -7,4 +7,19 @@
         android:title="@string/stop_all"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/action_settings"
+        android:title="@string/settings"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_export_profile"
+        android:title="@string/export_profile"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_import_profile"
+        android:title="@string/import_profile"
+        app:showAsAction="never" />
+
 </menu>

@@ -21,6 +21,13 @@ class SoundPlayer(private val context: Context) {
     private var fadeSteps = 0
     private var fadeStepIndex = 0
 
+    var fadeMs: Long = DEFAULT_FADE_MS
+        set(value) {
+            field = value.coerceIn(50L, 10_000L)
+        }
+
+    var onStopped: (() -> Unit)? = null
+
     private val watchdog = object : Runnable {
         override fun run() {
             val p = player ?: return
@@ -45,7 +52,7 @@ class SoundPlayer(private val context: Context) {
                 stopInternal()
                 return
             }
-            if (c.fadeOut && !fading && remaining <= FADE_MS) {
+            if (c.fadeOut && !fading && remaining <= fadeMs) {
                 startFade(remaining)
             }
             handler.postDelayed(this, WATCHDOG_INTERVAL_MS)
@@ -153,6 +160,7 @@ class SoundPlayer(private val context: Context) {
     }
 
     private fun stopInternal() {
+        val wasPlaying = current != null
         handler.removeCallbacks(watchdog)
         handler.removeCallbacks(fadeRunnable)
         player?.let {
@@ -171,10 +179,11 @@ class SoundPlayer(private val context: Context) {
         fading = false
         fadeSteps = 0
         fadeStepIndex = 0
+        if (wasPlaying) onStopped?.invoke()
     }
 
     companion object {
-        private const val FADE_MS = 500L
+        private const val DEFAULT_FADE_MS = 500L
         private const val FADE_STEP_MS = 25L
         private const val WATCHDOG_INTERVAL_MS = 50L
         private const val DUCK_VOLUME = 0.2f

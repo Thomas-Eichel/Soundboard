@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -19,8 +21,10 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var store: SoundStore
+    private lateinit var profileStore: ProfileStore
     private lateinit var player: SoundPlayer
     private val sounds = mutableListOf<Sound>()
+    private lateinit var settings: AppSettings
     private lateinit var adapter: SoundAdapter
 
     private var pickedUri: Uri? = null
@@ -39,6 +43,39 @@ class MainActivity : AppCompatActivity() {
             editDialog?.pickedFile?.text = displayName(uri)
         }
 
+    private val exportProfile =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+            if (uri == null) return@registerForActivityResult
+            profileStore.export(uri, settings, sounds) { ok ->
+                Toast.makeText(
+                    this,
+                    if (ok) R.string.profile_saved else R.string.profile_save_error,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+
+    private val importProfile =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            profileStore.import(uri) { result ->
+                if (result == null) {
+                    Toast.makeText(this, R.string.profile_load_error, Toast.LENGTH_SHORT).show()
+                } else {
+                    settings = result.settings
+                    store.saveSettings(settings)
+                    player.fadeMs = settings.fadeMs
+                    sounds.clear()
+                    sounds.addAll(result.sounds)
+                    store.save(sounds)
+                    adapter.playingId = null
+                    adapter.notifyDataSetChanged()
+                    updateEmptyView()
+                    Toast.makeText(this, R.string.profile_loaded, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -46,11 +83,15 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
 
         store = SoundStore(this)
+        profileStore = ProfileStore(this)
         player = SoundPlayer(this)
 
+        settings = store.loadSettings()
+        player.fadeMs = settings.fadeMs
+
         sounds.addAll(store.load())
-        while (sounds.size < GRID_SIZE) {
-            sounds.add(Sound(System.currentTimeMillis() + sounds.size, "", null, 0.0, true))
+        while (sounds.size < SoundStore.GRID_SIZE) {
+            sounds.add(newEmptySound(sounds.size))
         }
 
         adapter = SoundAdapter(
@@ -58,15 +99,33 @@ class MainActivity : AppCompatActivity() {
             onClick = { pos ->
                 if (pos < 0 || pos >= sounds.size) return@SoundAdapter
                 val s = sounds[pos]
-                if (s.uri != null) player.play(s) else showEditDialog(pos)
+                if (s.uri != null) {
+                    player.play(s)
+                    adapter.playingId = s.id
+                } else showEditDialog(pos)
             },
             onLongClick = { pos ->
                 if (pos >= 0 && pos < sounds.size) showEditDialog(pos)
             }
         )
+        player.onStopped = { adapter.playingId = null }
+
         binding.recyclerView.setHasFixedSize(true)
         binding.recyclerView.layoutManager = GridLayoutManager(this, GRID_COLUMNS)
         binding.recyclerView.adapter = adapter
+        updateEmptyView()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        settings = store.loadSettings()
+        player.fadeMs = settings.fadeMs
+        sounds.clear()
+        sounds.addAll(store.load())
+        while (sounds.size < SoundStore.GRID_SIZE) {
+            sounds.add(newEmptySound(sounds.size))
+        }
+        adapter.notifyDataSetChanged()
         updateEmptyView()
     }
 
@@ -76,17 +135,34 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.action_stop_all) {
-            player.stop()
-            return true
+        return when (item.itemId) {
+            R.id.action_stop_all -> {
+                player.stop()
+                true
+            }
+            R.id.action_settings -> {
+                startActivity(Intent(this, SettingsActivity::class.java))
+                true
+            }
+            R.id.action_export_profile -> {
+                exportProfile.launch("soundboard-profil.zip")
+                true
+            }
+            R.id.action_import_profile -> {
+                importProfile.launch(arrayOf("application/zip"))
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
-        return super.onOptionsItemSelected(item)
     }
 
     override fun onDestroy() {
         player.release()
         super.onDestroy()
     }
+
+    private fun newEmptySound(slot: Int) =
+        Sound(System.currentTimeMillis() + slot, "", null, 0.0, true, null, null)
 
     private fun showEditDialog(slot: Int) {
         val current = sounds[slot]
@@ -101,6 +177,10 @@ class MainActivity : AppCompatActivity() {
         dialogBinding.pickedFile.text =
             current.uri?.let { displayName(it) } ?: getString(R.string.no_sound_picked)
 
+        val categoryOptions = listOf(getString(R.string.no_category)) + settings.categories
+        setupCategorySpinner(dialogBinding.category1Spinner, categoryOptions, current.category1)
+        setupCategorySpinner(dialogBinding.category2Spinner, categoryOptions, current.category2)
+
         val dialog = AlertDialog.Builder(this)
             .setTitle(if (current.uri == null) R.string.add_sound else R.string.edit_sound)
             .setView(dialogBinding.root)
@@ -109,8 +189,7 @@ class MainActivity : AppCompatActivity() {
             .apply {
                 if (current.uri != null) {
                     setNeutralButton(R.string.delete) { _, _ ->
-                        sounds[slot] =
-                            Sound(System.currentTimeMillis() + slot, "", null, 0.0, true)
+                        sounds[slot] = newEmptySound(slot)
                         persist()
                         adapter.notifyItemChanged(slot)
                     }
@@ -138,7 +217,9 @@ class MainActivity : AppCompatActivity() {
                     name = name,
                     uri = uri,
                     durationSec = duration,
-                    fadeOut = dialogBinding.fadeSwitch.isChecked
+                    fadeOut = dialogBinding.fadeSwitch.isChecked,
+                    category1 = selectedCategory(dialogBinding.category1Spinner, categoryOptions),
+                    category2 = selectedCategory(dialogBinding.category2Spinner, categoryOptions)
                 )
                 persist()
                 adapter.notifyItemChanged(slot)
@@ -147,6 +228,18 @@ class MainActivity : AppCompatActivity() {
         }
         dialog.setOnDismissListener { editDialog = null }
         dialog.show()
+    }
+
+    private fun setupCategorySpinner(spinner: Spinner, options: List<String>, current: String?) {
+        spinner.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
+        val idx = current?.let { options.indexOf(it) } ?: -1
+        spinner.setSelection(if (idx >= 0) idx else 0)
+    }
+
+    private fun selectedCategory(spinner: Spinner, options: List<String>): String? {
+        val pos = spinner.selectedItemPosition
+        return if (pos <= 0) null else options[pos]
     }
 
     private fun persist() {
@@ -170,7 +263,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val GRID_SIZE = 12
         private const val GRID_COLUMNS = 3
     }
 }

@@ -7,5 +7,7 @@ data class Sound(
     val name: String,
     val uri: Uri?,
     val durationSec: Double,
-    val fadeOut: Boolean
+    val fadeOut: Boolean,
+    val category1: String? = null,
+    val category2: String? = null
 )
