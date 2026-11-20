@@ -130,6 +130,6 @@ class SoundAdapter(
 
     companion object {
         private const val TILE_HEIGHT_DP = 92
-        private const val HEADER_HEIGHT_DP = 32
+        private const val HEADER_HEIGHT_DP = 38
     }
 }
