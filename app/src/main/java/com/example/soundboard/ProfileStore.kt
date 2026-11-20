@@ -74,6 +74,7 @@ class ProfileStore(private val context: Context) {
                         JSONObject()
                             .put("categories", JSONArray(settings.categories))
                             .put("reorderLocked", settings.reorderLocked)
+                            .put("columns", settings.columns)
                     )
                     root.put("sounds", arr)
                     zip.putNextEntry(ZipEntry("profile.json"))
@@ -142,7 +143,8 @@ class ProfileStore(private val context: Context) {
                 }
                 val settings = AppSettings(
                     categories = categories,
-                    reorderLocked = settingsObj.optBoolean("reorderLocked", false)
+                    reorderLocked = settingsObj.optBoolean("reorderLocked", false),
+                    columns = settingsObj.optInt("columns", 3)
                 )
                 val slots = mutableListOf<Sound>()
                 val arr = json.getJSONArray("sounds")

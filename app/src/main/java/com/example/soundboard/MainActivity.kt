@@ -12,6 +12,7 @@ import android.text.InputType
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.EditText
@@ -22,6 +23,7 @@ import android.widget.Toast
 import java.io.File
 import java.util.Collections
 import kotlin.concurrent.thread
+import kotlin.math.roundToInt
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -42,6 +44,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var settings: AppSettings
     private lateinit var adapter: SoundAdapter
     private lateinit var itemTouchHelper: ItemTouchHelper
+    private lateinit var scaleGestureDetector: ScaleGestureDetector
+    private var gestureStartColumns = GRID_COLUMNS
 
     private var pickedUri: Uri? = null
     private var dialogColor: String? = null
@@ -110,6 +114,7 @@ class MainActivity : AppCompatActivity() {
                     player.stop()
                     settings = result.settings
                     store.saveSettings(settings)
+                    applyColumnsFromSettings()
                     sounds.clear()
                     sounds.addAll(result.sounds)
                     store.save(sounds)
@@ -167,13 +172,43 @@ class MainActivity : AppCompatActivity() {
         binding.stopButton.setOnClickListener { player.stopWithQuickFade() }
 
         binding.recyclerView.setHasFixedSize(true)
-        val layoutManager = GridLayoutManager(this, GRID_COLUMNS)
+        val layoutManager = GridLayoutManager(
+            this,
+            settings.columns.coerceIn(MIN_COLUMNS, MAX_COLUMNS)
+        )
         layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
             override fun getSpanSize(position: Int): Int =
-                if (position in sounds.indices && sounds[position].isHeader) GRID_COLUMNS else 1
+                if (position in sounds.indices && sounds[position].isHeader) {
+                    layoutManager.spanCount
+                } else 1
         }
         binding.recyclerView.layoutManager = layoutManager
         binding.recyclerView.adapter = adapter
+        scaleGestureDetector = ScaleGestureDetector(
+            this,
+            object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+                    gestureStartColumns = layoutManager.spanCount
+                    return true
+                }
+
+                override fun onScale(detector: ScaleGestureDetector): Boolean {
+                    val target = (gestureStartColumns / detector.scaleFactor)
+                        .roundToInt()
+                        .coerceIn(MIN_COLUMNS, MAX_COLUMNS)
+                    if (target != layoutManager.spanCount) {
+                        layoutManager.spanCount = target
+                        settings.columns = target
+                        store.saveSettings(settings)
+                    }
+                    return true
+                }
+            }
+        )
+        binding.recyclerView.setOnTouchListener { _, event ->
+            scaleGestureDetector.onTouchEvent(event)
+            false
+        }
         itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.Callback() {
             override fun getMovementFlags(
                 recyclerView: RecyclerView,
@@ -220,9 +255,15 @@ class MainActivity : AppCompatActivity() {
         sounds.addAll(store.load())
         binding.stopButton.isEnabled = false
         adapter.dragEnabled = !settings.reorderLocked
+        applyColumnsFromSettings()
         adapter.notifyDataSetChanged()
         updateEmptyView()
         invalidateOptionsMenu()
+    }
+
+    private fun applyColumnsFromSettings() {
+        (binding.recyclerView.layoutManager as? GridLayoutManager)?.spanCount =
+            settings.columns.coerceIn(MIN_COLUMNS, MAX_COLUMNS)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -623,6 +664,8 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "MainActivity"
         private const val GRID_COLUMNS = 3
+        private const val MIN_COLUMNS = 1
+        private const val MAX_COLUMNS = 5
         private const val FADE_SLIDER_MAX_MS = 10_000
         private val PRESET_COLORS = listOf(
             "#F44336", "#FF9800", "#FFEB3B", "#4CAF50",

@@ -7,7 +7,8 @@ import org.json.JSONObject
 
 data class AppSettings(
     val categories: MutableList<String> = mutableListOf(),
-    var reorderLocked: Boolean = false
+    var reorderLocked: Boolean = false,
+    var columns: Int = 3
 )
 
 // Android's JSONObject.optString returns the literal string "null" for JSON null values,
@@ -75,7 +76,8 @@ class SoundStore(context: Context) {
         }
         return AppSettings(
             categories = categories,
-            reorderLocked = o.optBoolean("reorderLocked", false)
+            reorderLocked = o.optBoolean("reorderLocked", false),
+            columns = o.optInt("columns", 3)
         )
     }
 
@@ -83,6 +85,7 @@ class SoundStore(context: Context) {
         val o = JSONObject()
             .put("categories", JSONArray(settings.categories))
             .put("reorderLocked", settings.reorderLocked)
+            .put("columns", settings.columns)
         prefs.edit().putString(KEY_SETTINGS, o.toString()).apply()
     }
 
