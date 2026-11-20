@@ -48,7 +48,8 @@ class SoundAdapter(
             holder.binding.root.setCardBackgroundColor(Color.TRANSPARENT)
             holder.binding.root.setStrokeWidth(0)
             holder.binding.buttonImage.isVisible = false
-            holder.binding.buttonCategories.isVisible = false
+            holder.binding.buttonCategory1.isVisible = false
+            holder.binding.buttonCategory2.isVisible = false
             holder.binding.buttonName.text = sound.name.ifEmpty {
                 holder.itemView.context.getString(R.string.header_placeholder)
             }
@@ -58,9 +59,10 @@ class SoundAdapter(
         } else {
             holder.binding.root.cardElevation = defaultElev
             holder.binding.buttonName.text = sound.name.ifEmpty { "Sound ${position + 1}" }
-            val categories = listOfNotNull(sound.category1, sound.category2).joinToString(", ")
-            holder.binding.buttonCategories.text = categories
-            holder.binding.buttonCategories.isVisible = categories.isNotEmpty()
+            holder.binding.buttonCategory1.text = sound.category1 ?: ""
+            holder.binding.buttonCategory1.isVisible = !sound.category1.isNullOrEmpty()
+            holder.binding.buttonCategory2.text = sound.category2 ?: ""
+            holder.binding.buttonCategory2.isVisible = !sound.category2.isNullOrEmpty()
 
             val hasImage = sound.imageUri != null
             if (hasImage) {
@@ -78,7 +80,8 @@ class SoundAdapter(
                 tv.data
             }
             holder.binding.buttonName.setTextColor(textColor)
-            holder.binding.buttonCategories.setTextColor(textColor)
+            holder.binding.buttonCategory1.setTextColor(textColor)
+            holder.binding.buttonCategory2.setTextColor(textColor)
 
             val bgColor = sound.backgroundColor?.let { hex ->
                 try {
