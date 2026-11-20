@@ -149,12 +149,12 @@ class ProfileStore(private val context: Context) {
                     val o = arr.getJSONObject(i)
                     val slot = o.optInt("slot", -1)
                     if (slot < 0 || slot >= slots.size) continue
-                    val audioEntry = o.optString("audioEntry")
+                    val audioEntry = o.optNullableString("audioEntry")
                     val file =
-                        if (audioEntry.isNotEmpty()) File(dir, audioEntry.substringAfter('/')) else null
-                    val imageEntry = o.optString("imageEntry")
+                        if (!audioEntry.isNullOrEmpty()) File(dir, audioEntry.substringAfter('/')) else null
+                    val imageEntry = o.optNullableString("imageEntry")
                     val imageFile =
-                        if (imageEntry.isNotEmpty()) File(imageDir, imageEntry.substringAfter('/')) else null
+                        if (!imageEntry.isNullOrEmpty()) File(imageDir, imageEntry.substringAfter('/')) else null
                     slots[slot] = Sound(
                         id = o.getLong("id"),
                         name = o.getString("name"),
@@ -163,9 +163,9 @@ class ProfileStore(private val context: Context) {
                         } else null,
                         durationSec = o.optDouble("durationSec", 0.0),
                         fadeOut = o.optBoolean("fadeOut", true),
-                        category1 = o.optString("category1").ifEmpty { null },
-                        category2 = o.optString("category2").ifEmpty { null },
-                        backgroundColor = o.optString("backgroundColor").ifEmpty { null },
+                        category1 = o.optNullableString("category1"),
+                        category2 = o.optNullableString("category2"),
+                        backgroundColor = o.optNullableString("backgroundColor"),
                         imageUri = if (imageFile != null && imageFile.exists() && imageFile.length() > 0) {
                             Uri.fromFile(imageFile)
                         } else null

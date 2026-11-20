@@ -10,6 +10,14 @@ data class AppSettings(
     val categories: MutableList<String> = mutableListOf()
 )
 
+// Android's JSONObject.optString returns the literal string "null" for JSON null values,
+// so nullable string fields must be read via isNull() first.
+internal fun JSONObject.optNullableString(key: String): String? {
+    if (isNull(key)) return null
+    val v = optString(key)
+    return if (v.isEmpty() || v == "null") null else v
+}
+
 class SoundStore(context: Context) {
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -19,19 +27,16 @@ class SoundStore(context: Context) {
         val arr = JSONArray(json)
         return (0 until arr.length()).map { i ->
             val o = arr.getJSONObject(i)
-            val uriString = o.optString("uri")
             Sound(
                 id = o.getLong("id"),
                 name = o.getString("name"),
-                uri = if (uriString.isNotEmpty()) Uri.parse(uriString) else null,
+                uri = o.optNullableString("uri")?.let { Uri.parse(it) },
                 durationSec = o.optDouble("durationSec", 0.0),
                 fadeOut = o.optBoolean("fadeOut", true),
-                category1 = o.optString("category1").ifEmpty { null },
-                category2 = o.optString("category2").ifEmpty { null },
-                backgroundColor = o.optString("backgroundColor").ifEmpty { null },
-                imageUri = o.optString("imageUri").let {
-                    if (it.isNotEmpty()) Uri.parse(it) else null
-                }
+                category1 = o.optNullableString("category1"),
+                category2 = o.optNullableString("category2"),
+                backgroundColor = o.optNullableString("backgroundColor"),
+                imageUri = o.optNullableString("imageUri")?.let { Uri.parse(it) }
             )
         }
     }

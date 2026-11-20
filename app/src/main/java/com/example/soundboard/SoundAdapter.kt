@@ -55,8 +55,15 @@ class SoundAdapter(
         holder.binding.buttonName.setTextColor(textColor)
         holder.binding.buttonCategories.setTextColor(textColor)
 
-        if (sound.backgroundColor != null) {
-            holder.binding.root.setCardBackgroundColor(Color.parseColor(sound.backgroundColor))
+        val bgColor = sound.backgroundColor?.let { hex ->
+            try {
+                Color.parseColor(hex)
+            } catch (_: Exception) {
+                null
+            }
+        }
+        if (bgColor != null) {
+            holder.binding.root.setCardBackgroundColor(bgColor)
         } else {
             val tv = TypedValue()
             theme.resolveAttribute(com.google.android.material.R.attr.colorSurface, tv, true)
