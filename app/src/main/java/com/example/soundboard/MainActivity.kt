@@ -2,15 +2,13 @@ package com.example.soundboard
 
 import android.Manifest
 import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
-import android.media.AudioAttributes
-import android.media.AudioFormat
-import android.media.AudioPlaybackCaptureConfiguration
-import android.media.AudioRecord
 import android.media.MediaRecorder
-import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
@@ -63,10 +61,7 @@ class MainActivity : AppCompatActivity() {
     private var recorder: MediaRecorder? = null
     private var recordingFile: File? = null
     private var pendingMode = MODE_MIC
-    private var mediaProjection: MediaProjection? = null
-    private var projRecorder: MediaRecorder? = null
-    private var projAudioRecord: AudioRecord? = null
-    private var projectionFile: File? = null
+    private var serviceRecording = false
     private var dialogColor: String? = null
     private var dialogImageUri: Uri? = null
     private var editDialog: DialogEditSoundBinding? = null
@@ -129,11 +124,44 @@ class MainActivity : AppCompatActivity() {
     private val projectionLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK && result.data != null) {
-                startProjectionRecording(result.data!!)
+                val svc = Intent(this, RecordingService::class.java)
+                    .setAction(RecordingService.ACTION_START)
+                    .putExtra(RecordingService.EXTRA_RESULT_CODE, result.resultCode)
+                    .putExtra(RecordingService.EXTRA_RESULT_DATA, result.data)
+                ContextCompat.startForegroundService(this, svc)
             } else {
                 Toast.makeText(this, R.string.record_failed, Toast.LENGTH_SHORT).show()
             }
         }
+
+    private val recordingReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.getStringExtra(RecordingService.EXTRA_STATE)) {
+                RecordingService.STATE_STARTED -> {
+                    serviceRecording = true
+                    editDialog?.recordButton?.text = getString(R.string.recording)
+                }
+                RecordingService.STATE_STOPPED -> {
+                    serviceRecording = false
+                    editDialog?.recordButton?.text = getString(R.string.record_sound)
+                    val path = intent.getStringExtra(RecordingService.EXTRA_FILE)
+                    if (!path.isNullOrEmpty() && File(path).length() > 0) {
+                        val local = Uri.fromFile(File(path))
+                        pickedUri = local
+                        editDialog?.pickedFile?.text = displayName(local)
+                        editDialog?.let { setupTrimControls(it, local, 0.0, 0.0, 0.0, 0.0) }
+                    } else {
+                        Toast.makeText(this@MainActivity, R.string.record_failed, Toast.LENGTH_LONG).show()
+                    }
+                }
+                RecordingService.STATE_ERROR -> {
+                    serviceRecording = false
+                    editDialog?.recordButton?.text = getString(R.string.record_sound)
+                    Toast.makeText(this@MainActivity, R.string.record_failed, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
 
     private val exportProfile =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
@@ -300,6 +328,12 @@ class MainActivity : AppCompatActivity() {
             scaleGestureDetector.onTouchEvent(event)
             false
         }
+        ContextCompat.registerReceiver(
+            this,
+            recordingReceiver,
+            IntentFilter(RecordingService.BROADCAST_STATE),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
         binding.emptyView.setOnClickListener { addTile() }
         updateEmptyView()
     }
@@ -375,6 +409,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         if (isRecording()) stopRecording()
+        try {
+            unregisterReceiver(recordingReceiver)
+        } catch (_: Exception) {
+        }
         player.release()
         super.onDestroy()
     }
@@ -652,105 +690,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun isRecording() = recorder != null || projRecorder != null
-
-    private fun startProjectionRecording(data: Intent) {
-        try {
-            ContextCompat.startForegroundService(
-                this,
-                Intent(this, RecordingService::class.java).setAction(RecordingService.ACTION_START)
-            )
-            val mgr = getSystemService(MediaProjectionManager::class.java)
-            val projection = mgr.getMediaProjection(Activity.RESULT_OK, data) ?: run {
-                Toast.makeText(this, R.string.record_failed, Toast.LENGTH_LONG).show()
-                stopService(Intent(this, RecordingService::class.java))
-                return
-            }
-            mediaProjection = projection
-            projection.registerCallback(
-                object : MediaProjection.Callback() {
-                    override fun onStop() {
-                        stopRecording()
-                    }
-                },
-                Handler(Looper.getMainLooper())
-            )
-            val captureConfig = AudioPlaybackCaptureConfiguration.Builder(projection)
-                .addMatchingUsage(AudioAttributes.USAGE_MEDIA)
-                .addMatchingUsage(AudioAttributes.USAGE_GAME)
-                .build()
-            val minBuf = AudioRecord.getMinBufferSize(
-                44100,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT
-            )
-            val audioRecord = AudioRecord.Builder()
-                .setAudioPlaybackCaptureConfig(captureConfig)
-                .setAudioFormat(
-                    AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(44100)
-                        .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
-                        .build()
-                )
-                .setBufferSizeInBytes(minBuf)
-                .build()
-            projAudioRecord = audioRecord
-            val dir = File(filesDir, "media")
-            dir.mkdirs()
-            val file = File(dir, "audio_${System.currentTimeMillis()}_aufnahme.mp3")
-            val rec = MediaRecorder(this)
-            rec.setAudioSource(audioRecord.audioSource)
-            rec.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            rec.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            rec.setAudioSamplingRate(44100)
-            rec.setOutputFile(file.absolutePath)
-            rec.prepare()
-            rec.start()
-            projRecorder = rec
-            projectionFile = file
-            editDialog?.recordButton?.text = getString(R.string.recording)
-        } catch (e: Exception) {
-            Log.e(TAG, "startProjectionRecording failed", e)
-            stopRecording()
-            Toast.makeText(this, R.string.record_failed, Toast.LENGTH_LONG).show()
-        }
-    }
+    private fun isRecording() = recorder != null || serviceRecording
 
     private fun stopRecording() {
         val b = editDialog
-        if (projRecorder != null || mediaProjection != null) {
-            try {
-                projRecorder?.stop()
-            } catch (_: Exception) {
-            }
-            try {
-                projRecorder?.release()
-            } catch (_: Exception) {
-            }
-            projRecorder = null
-            try {
-                projAudioRecord?.release()
-            } catch (_: Exception) {
-            }
-            projAudioRecord = null
-            try {
-                mediaProjection?.stop()
-            } catch (_: Exception) {
-            }
-            mediaProjection = null
-            stopService(Intent(this, RecordingService::class.java))
-            val file = projectionFile
-            projectionFile = null
-            b?.recordButton?.text = getString(R.string.record_sound)
-            if (file != null && file.exists() && file.length() > 0) {
-                val local = Uri.fromFile(file)
-                pickedUri = local
-                b?.pickedFile?.text = displayName(local)
-                b?.let { setupTrimControls(it, local, 0.0, 0.0, 0.0, 0.0) }
-            } else {
-                Toast.makeText(this, R.string.record_failed, Toast.LENGTH_LONG).show()
-            }
+        if (serviceRecording) {
+            stopService(
+                Intent(this, RecordingService::class.java).setAction(RecordingService.ACTION_STOP)
+            )
             return
         }
         val rec = recorder ?: return
