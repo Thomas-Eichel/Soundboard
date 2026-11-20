@@ -18,12 +18,15 @@ import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.Toast
 import java.io.File
+import java.util.Collections
 import kotlin.concurrent.thread
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.RecyclerView
 import com.example.soundboard.databinding.ActivityMainBinding
 import com.example.soundboard.databinding.DialogEditSoundBinding
 
@@ -36,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     private val sounds = mutableListOf<Sound>()
     private lateinit var settings: AppSettings
     private lateinit var adapter: SoundAdapter
+    private lateinit var itemTouchHelper: ItemTouchHelper
 
     private var pickedUri: Uri? = null
     private var dialogColor: String? = null
@@ -131,9 +135,6 @@ class MainActivity : AppCompatActivity() {
         player.fadeMs = settings.fadeMs
 
         sounds.addAll(store.load())
-        while (sounds.size < SoundStore.GRID_SIZE) {
-            sounds.add(newEmptySound(sounds.size))
-        }
         migrateContentUrisToPrivate()
 
         adapter = SoundAdapter(
@@ -149,7 +150,8 @@ class MainActivity : AppCompatActivity() {
             },
             onLongClick = { pos ->
                 if (pos >= 0 && pos < sounds.size) showEditDialog(pos)
-            }
+            },
+            onStartDrag = { holder -> itemTouchHelper.startDrag(holder) }
         )
         player.onStopped = {
             adapter.playingId = null
@@ -160,6 +162,42 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerView.setHasFixedSize(true)
         binding.recyclerView.layoutManager = GridLayoutManager(this, GRID_COLUMNS)
         binding.recyclerView.adapter = adapter
+        itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.Callback() {
+            override fun getMovementFlags(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder
+            ): Int {
+                val dragFlags = ItemTouchHelper.UP or ItemTouchHelper.DOWN or
+                    ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
+                return makeMovementFlags(dragFlags, 0)
+            }
+
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                val from = viewHolder.bindingAdapterPosition
+                val to = target.bindingAdapterPosition
+                if (from == RecyclerView.NO_POSITION || to == RecyclerView.NO_POSITION) return false
+                Collections.swap(sounds, from, to)
+                adapter.notifyItemMoved(from, to)
+                return true
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+
+            override fun isLongPressDragEnabled() = false
+
+            override fun isItemViewSwipeEnabled() = false
+
+            override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+                super.clearView(recyclerView, viewHolder)
+                persist()
+            }
+        })
+        itemTouchHelper.attachToRecyclerView(binding.recyclerView)
+        binding.emptyView.setOnClickListener { addTile() }
         updateEmptyView()
     }
 
@@ -169,9 +207,6 @@ class MainActivity : AppCompatActivity() {
         player.fadeMs = settings.fadeMs
         sounds.clear()
         sounds.addAll(store.load())
-        while (sounds.size < SoundStore.GRID_SIZE) {
-            sounds.add(newEmptySound(sounds.size))
-        }
         binding.stopButton.isEnabled = false
         adapter.notifyDataSetChanged()
         updateEmptyView()
@@ -186,6 +221,10 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.action_stop_all -> {
                 player.stop()
+                true
+            }
+            R.id.action_add_sound -> {
+                addTile()
                 true
             }
             R.id.action_settings -> {
@@ -215,8 +254,17 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    private fun newEmptySound(slot: Int) =
-        Sound(System.currentTimeMillis() + slot, "", null, 0.0, true, null, null)
+    private var idSeq = 0L
+
+    private fun newEmptySound() =
+        Sound(System.currentTimeMillis() + idSeq++, "", null, 0.0, true)
+
+    private fun addTile() {
+        sounds.add(newEmptySound())
+        persist()
+        adapter.notifyItemInserted(sounds.size - 1)
+        binding.recyclerView.smoothScrollToPosition(sounds.size - 1)
+    }
 
     private fun copyPickedToPrivate(uri: Uri, prefix: String, onDone: (Uri?) -> Unit) {
         thread {
@@ -265,7 +313,7 @@ class MainActivity : AppCompatActivity() {
         val u = uri ?: return
         if (u.scheme == "file") {
             val path = u.path ?: return
-            if (path.startsWith(File(filesDir, "media").absolutePath)) {
+            if (path.startsWith(filesDir.absolutePath)) {
                 File(path).delete()
             }
         }
@@ -329,9 +377,9 @@ class MainActivity : AppCompatActivity() {
                     setNeutralButton(R.string.delete) { _, _ ->
                         deletePrivateMedia(current.uri)
                         deletePrivateMedia(current.imageUri)
-                        sounds[slot] = newEmptySound(slot)
+                        sounds.removeAt(slot)
                         persist()
-                        adapter.notifyItemChanged(slot)
+                        adapter.notifyItemRemoved(slot)
                     }
                 }
             }

@@ -143,14 +143,25 @@ class ProfileStore(private val context: Context) {
                     fadeMs = settingsObj.optLong("fadeMs", SoundStore.DEFAULT_FADE_MS),
                     categories = categories
                 )
-                val slots = MutableList(SoundStore.GRID_SIZE) {
-                    Sound(System.currentTimeMillis() + it, "", null, 0.0, true, null, null)
-                }
+                val slots = mutableListOf<Sound>()
                 val arr = json.getJSONArray("sounds")
                 for (i in 0 until arr.length()) {
                     val o = arr.getJSONObject(i)
                     val slot = o.optInt("slot", -1)
-                    if (slot < 0 || slot >= slots.size) continue
+                    if (slot < 0) continue
+                    while (slots.size <= slot) {
+                        slots.add(
+                            Sound(
+                                System.currentTimeMillis() + slots.size,
+                                "",
+                                null,
+                                0.0,
+                                true,
+                                null,
+                                null
+                            )
+                        )
+                    }
                     val audioEntry = o.optNullableString("audioEntry")
                     val file =
                         if (!audioEntry.isNullOrEmpty()) File(dir, audioEntry.substringAfter('/')) else null

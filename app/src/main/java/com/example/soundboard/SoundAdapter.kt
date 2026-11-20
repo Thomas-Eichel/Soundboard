@@ -3,6 +3,7 @@ package com.example.soundboard
 import android.graphics.Color
 import android.util.TypedValue
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
@@ -11,7 +12,8 @@ import com.example.soundboard.databinding.ItemSoundBinding
 class SoundAdapter(
     private val items: List<Sound>,
     private val onClick: (Int) -> Unit,
-    private val onLongClick: (Int) -> Unit
+    private val onLongClick: (Int) -> Unit,
+    private val onStartDrag: (ViewHolder) -> Unit
 ) : RecyclerView.Adapter<SoundAdapter.ViewHolder>() {
 
     var playingId: Long? = null
@@ -82,6 +84,12 @@ class SoundAdapter(
         holder.itemView.setOnClickListener { onClick(holder.bindingAdapterPosition) }
         holder.itemView.setOnLongClickListener {
             onLongClick(holder.bindingAdapterPosition)
+            true
+        }
+        holder.binding.dragHandle.setOnTouchListener { _, event ->
+            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                onStartDrag(holder)
+            }
             true
         }
     }

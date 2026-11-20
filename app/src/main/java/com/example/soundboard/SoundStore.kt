@@ -85,7 +85,6 @@ class SoundStore(context: Context) {
     }
 
     companion object {
-        const val GRID_SIZE = 12
         const val DEFAULT_FADE_MS = 500L
         private const val PREFS_NAME = "soundboard"
         private const val KEY_SOUNDS = "sounds"

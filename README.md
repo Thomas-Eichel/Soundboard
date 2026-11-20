@@ -4,7 +4,7 @@ Einfache Android-Soundboard-App (Kotlin, min. Android 8.0 / API 26).
 
 ## Funktionen
 
-- 12 Sound-Buttons im Raster (3 Spalten)
+- Sound-Buttons im Raster (3 Spalten), beliebig viele Kacheln: ueber das Menue **Kachel hinzufuegen**, per **Löschen** im Bearbeiten-Dialog entfernen, per **Drag & Drop** (Griff rechts oben) verschieben — die Reihenfolge wird persistiert
 - Pro Button: MP3-/Audiodatei hinterlegen (per Dateiauswahl, URI wird persistent gespeichert)
 - Pro Button einstellbar:
   - **Abspieldauer in Sekunden** (`0` = komplette Datei)
@@ -44,7 +44,7 @@ darauf hart gestoppt; ist "Smooth ausblenden" aktiv, startet in den letzten
 - Menue **Einstellungen** (`SettingsActivity`): zentrale Liste der Kategorien verwalten (hinzufuegen / umbenennen / loeschen — Aenderungen werden auf alle Sounds uebernommen) sowie globale **Fade-Out-Dauer** in ms
 - Pro Sound koennen im Bearbeiten-Dialog **zwei Kategorien** aus der zentralen Liste vergeben werden; sie werden auf der Kachel angezeigt
 - **Kachel-Design pro Sound**: Akzentfarbe (Preset-Farbwähler) oder Grafikdatei (Bild), Text wird bei Grafik weiss; im Profil-ZIP enthalten (`backgroundColor` + `image/<slot>.bin`)
-- Menue **Profil exportieren / Profil laden**: komplettes Profil als eine ZIP-Datei (`soundboard-profil.zip`) ueber den System-Dateidialog. Inhalt: `profile.json` (Version, Einstellungen, alle 12 Slots mit Name/Dauer/Fade/Kategorien/Ausschnitt `startSec`/`endSec`/Design) + `audio/<slot>.mp3` (eingebettete Audiodaten). Beim Laden werden die MP3s ins app-private Verzeichnis entpackt — das Profil ist damit geraeteuebergreifend nutzbar
+- Menue **Profil exportieren / Profil laden**: komplettes Profil als eine ZIP-Datei (`soundboard-profil.zip`) ueber den System-Dateidialog. Inhalt: `profile.json` (Version, Einstellungen, alle Kacheln in Reihenfolge mit Name/Dauer/Fade/Kategorien/Ausschnitt `startSec`/`endSec`/Design) + `audio/<slot>.mp3` (eingebettete Audiodaten). Beim Laden werden die MP3s ins app-private Verzeichnis entpackt — das Profil ist damit geraeteuebergreifend nutzbar
 - Gerade abgespielter Sound wird auf seiner Kachel farblich hervorgehoben (Rand)
 
 ## Projektstruktur
