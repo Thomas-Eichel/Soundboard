@@ -128,8 +128,8 @@ class SoundAdapter(
             }
         }
 
-        holder.itemView.setOnClickListener { onClick(holder.bindingAdapterPosition) }
-        holder.itemView.setOnLongClickListener {
+        holder.binding.card.setOnClickListener { onClick(holder.bindingAdapterPosition) }
+        holder.binding.card.setOnLongClickListener {
             onLongClick(holder.bindingAdapterPosition)
             true
         }
