@@ -97,9 +97,7 @@ class SoundAdapter(
             if (bgColor != null) {
                 holder.binding.root.setCardBackgroundColor(bgColor)
             } else {
-                val tv = TypedValue()
-                theme.resolveAttribute(com.google.android.material.R.attr.colorSurface, tv, true)
-                holder.binding.root.setCardBackgroundColor(tv.data)
+                holder.binding.root.setCardBackgroundColor(DEFAULT_TILE_COLOR)
             }
 
             if (sound.id == playingId) {
@@ -131,5 +129,6 @@ class SoundAdapter(
     companion object {
         private const val TILE_HEIGHT_DP = 92
         private const val HEADER_HEIGHT_DP = 38
+        private val DEFAULT_TILE_COLOR = Color.parseColor("#E0E0E0")
     }
 }
