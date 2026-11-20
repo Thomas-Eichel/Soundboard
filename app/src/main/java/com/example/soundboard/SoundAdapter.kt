@@ -46,19 +46,16 @@ class SoundAdapter(
         val theme = holder.itemView.context.theme
         val density = holder.itemView.resources.displayMetrics.density
         val defaultElev = 2f * density
-        val lp = holder.itemView.layoutParams
-        lp.height = ((if (sound.isHeader) HEADER_HEIGHT_DP else TILE_HEIGHT_DP) * density).toInt()
-        holder.itemView.layoutParams = lp
+        applyItemHeight(holder, sound.isHeader)
 
         if (sound.isHeader) {
-            holder.binding.root.cardElevation = 0f
-            holder.binding.root.setCardBackgroundColor(Color.TRANSPARENT)
-            holder.binding.root.setStrokeWidth(0)
+            holder.binding.card.cardElevation = 0f
+            holder.binding.card.setCardBackgroundColor(Color.TRANSPARENT)
+            holder.binding.card.setStrokeWidth(0)
             holder.binding.buttonImage.isVisible = false
             holder.binding.buttonCategory1.isVisible = false
             holder.binding.buttonCategory2.isVisible = false
-            holder.binding.playCount.isVisible = false
-            holder.binding.duration.isVisible = false
+            holder.binding.footer.isVisible = false
             holder.binding.buttonName.text = sound.name.ifEmpty {
                 holder.itemView.context.getString(R.string.header_placeholder)
             }
@@ -66,7 +63,8 @@ class SoundAdapter(
             theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurface, tv, true)
             holder.binding.buttonName.setTextColor((tv.data and 0x00FFFFFF) or 0x99000000.toInt())
         } else {
-            holder.binding.root.cardElevation = defaultElev
+            holder.binding.card.cardElevation = defaultElev
+            holder.binding.footer.isVisible = true
             holder.binding.buttonName.text = sound.name.ifEmpty { "Sound ${position + 1}" }
             holder.binding.buttonCategory1.text = sound.category1 ?: ""
             holder.binding.buttonCategory1.isVisible = !sound.category1.isNullOrEmpty()
@@ -115,18 +113,18 @@ class SoundAdapter(
                 }
             }
             if (bgColor != null) {
-                holder.binding.root.setCardBackgroundColor(bgColor)
+                holder.binding.card.setCardBackgroundColor(bgColor)
             } else {
-                holder.binding.root.setCardBackgroundColor(DEFAULT_TILE_COLOR)
+                holder.binding.card.setCardBackgroundColor(DEFAULT_TILE_COLOR)
             }
 
             if (sound.id == playingId) {
                 val tv = TypedValue()
                 theme.resolveAttribute(androidx.appcompat.R.attr.colorPrimary, tv, true)
-                holder.binding.root.setStrokeColor(tv.data)
-                holder.binding.root.setStrokeWidth(6)
+                holder.binding.card.setStrokeColor(tv.data)
+                holder.binding.card.setStrokeWidth(6)
             } else {
-                holder.binding.root.setStrokeWidth(0)
+                holder.binding.card.setStrokeWidth(0)
             }
         }
 
@@ -145,6 +143,13 @@ class SoundAdapter(
     }
 
     override fun getItemCount(): Int = items.size
+
+    fun applyItemHeight(holder: ViewHolder, isHeader: Boolean) {
+        val density = holder.itemView.resources.displayMetrics.density
+        val lp = holder.binding.card.layoutParams
+        lp.height = ((if (isHeader) HEADER_HEIGHT_DP else TILE_HEIGHT_DP) * density).toInt()
+        holder.binding.card.layoutParams = lp
+    }
 
     companion object {
         private const val TILE_HEIGHT_DP = 92

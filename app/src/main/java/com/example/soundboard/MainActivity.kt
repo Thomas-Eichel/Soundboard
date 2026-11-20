@@ -329,6 +329,9 @@ class MainActivity : AppCompatActivity() {
                 if (from == RecyclerView.NO_POSITION || to == RecyclerView.NO_POSITION) return false
                 Collections.swap(sounds, from, to)
                 adapter.notifyItemMoved(from, to)
+                (viewHolder as? SoundAdapter.ViewHolder)?.let {
+                    adapter.applyItemHeight(it, sounds[to].isHeader)
+                }
                 return true
             }
 
