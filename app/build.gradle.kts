@@ -15,6 +15,19 @@ android {
         versionName = "1.0"
     }
 
+    signingConfigs {
+        named("debug") {
+            val ks = System.getenv("SOUNDBOARD_KEYSTORE")
+            if (ks != null) {
+                storeFile = file(ks)
+                storeType = "PKCS12"
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
