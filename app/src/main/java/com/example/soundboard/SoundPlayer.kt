@@ -171,7 +171,7 @@ class SoundPlayer(private val context: Context) {
     }
 
     private fun requestFocus() {
-        val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+        val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_CAN_DUCK)
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -187,6 +187,7 @@ class SoundPlayer(private val context: Context) {
                             player?.setVolume(DUCK_VOLUME, DUCK_VOLUME)
                         } catch (_: Exception) {
                         }
+                    AudioManager.AUDIOFOCUS_GAIN -> setVolumeSafe(lastVolume)
                 }
             }
             .build()
