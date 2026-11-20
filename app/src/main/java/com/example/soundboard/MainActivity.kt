@@ -1,11 +1,19 @@
 package com.example.soundboard
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.media.AudioAttributes
+import android.media.AudioFormat
+import android.media.AudioPlaybackCaptureConfiguration
+import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.media.projection.MediaProjection
+import android.media.projection.MediaProjectionManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -29,6 +37,7 @@ import kotlin.math.roundToInt
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -53,7 +62,11 @@ class MainActivity : AppCompatActivity() {
     private var pickedUri: Uri? = null
     private var recorder: MediaRecorder? = null
     private var recordingFile: File? = null
-    private var pendingAudioSource = MediaRecorder.AudioSource.MIC
+    private var pendingMode = MODE_MIC
+    private var mediaProjection: MediaProjection? = null
+    private var projRecorder: MediaRecorder? = null
+    private var projAudioRecord: AudioRecord? = null
+    private var projectionFile: File? = null
     private var dialogColor: String? = null
     private var dialogImageUri: Uri? = null
     private var editDialog: DialogEditSoundBinding? = null
@@ -89,12 +102,36 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-    private val requestMicPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) {
-                if (recorder == null) startRecording(pendingAudioSource) else stopRecording()
+    private val requestPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+            val micGranted = results[Manifest.permission.RECORD_AUDIO] == true
+            when (pendingMode) {
+                MODE_MIC -> {
+                    if (micGranted) startRecording(MediaRecorder.AudioSource.MIC) else {
+                        Toast.makeText(this, R.string.mic_permission_denied, Toast.LENGTH_LONG).show()
+                    }
+                }
+                MODE_INTERNAL -> {
+                    if (Build.VERSION.SDK_INT < 29) {
+                        if (micGranted) {
+                            startRecording(MediaRecorder.AudioSource.REMOTE_SUBMIX)
+                        } else {
+                            Toast.makeText(this, R.string.mic_permission_denied, Toast.LENGTH_LONG).show()
+                        }
+                    } else {
+                        val mgr = getSystemService(MediaProjectionManager::class.java)
+                        projectionLauncher.launch(mgr.createScreenCaptureIntent())
+                    }
+                }
+            }
+        }
+
+    private val projectionLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+                startProjectionRecording(result.data!!)
             } else {
-                Toast.makeText(this, R.string.mic_permission_denied, Toast.LENGTH_LONG).show()
+                Toast.makeText(this, R.string.record_failed, Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -337,7 +374,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        if (recorder != null) stopRecording()
+        if (isRecording()) stopRecording()
         player.release()
         super.onDestroy()
     }
@@ -525,7 +562,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         dialogBinding.recordButton.setOnClickListener {
-            if (recorder == null) {
+            if (isRecording()) {
+                stopRecording()
+            } else {
                 AlertDialog.Builder(this)
                     .setTitle(R.string.record_source_title)
                     .setItems(
@@ -534,18 +573,16 @@ class MainActivity : AppCompatActivity() {
                             getString(R.string.record_source_internal)
                         )
                     ) { _, which ->
-                        pendingAudioSource =
-                            if (which == 0) {
-                                MediaRecorder.AudioSource.MIC
-                            } else {
-                                MediaRecorder.AudioSource.REMOTE_SUBMIX
-                            }
-                        requestMicPermission.launch(Manifest.permission.RECORD_AUDIO)
+                        pendingMode = if (which == 0) MODE_MIC else MODE_INTERNAL
+                        requestPermissions.launch(
+                            arrayOf(
+                                Manifest.permission.RECORD_AUDIO,
+                                Manifest.permission.POST_NOTIFICATIONS
+                            )
+                        )
                     }
                     .setNegativeButton(R.string.cancel, null)
                     .show()
-            } else {
-                stopRecording()
             }
         }
 
@@ -585,7 +622,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         dialog.setOnDismissListener {
-            if (recorder != null) stopRecording()
+            if (isRecording()) stopRecording()
             editDialog = null
         }
         dialog.show()
@@ -615,7 +652,107 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun isRecording() = recorder != null || projRecorder != null
+
+    private fun startProjectionRecording(data: Intent) {
+        try {
+            ContextCompat.startForegroundService(
+                this,
+                Intent(this, RecordingService::class.java).setAction(RecordingService.ACTION_START)
+            )
+            val mgr = getSystemService(MediaProjectionManager::class.java)
+            val projection = mgr.getMediaProjection(Activity.RESULT_OK, data) ?: run {
+                Toast.makeText(this, R.string.record_failed, Toast.LENGTH_LONG).show()
+                stopService(Intent(this, RecordingService::class.java))
+                return
+            }
+            mediaProjection = projection
+            projection.registerCallback(
+                object : MediaProjection.Callback() {
+                    override fun onStop() {
+                        stopRecording()
+                    }
+                },
+                Handler(Looper.getMainLooper())
+            )
+            val captureConfig = AudioPlaybackCaptureConfiguration.Builder(projection)
+                .addMatchingUsage(AudioAttributes.USAGE_MEDIA)
+                .addMatchingUsage(AudioAttributes.USAGE_GAME)
+                .build()
+            val minBuf = AudioRecord.getMinBufferSize(
+                44100,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT
+            )
+            val audioRecord = AudioRecord.Builder()
+                .setAudioPlaybackCaptureConfig(captureConfig)
+                .setAudioFormat(
+                    AudioFormat.Builder()
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setSampleRate(44100)
+                        .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                        .build()
+                )
+                .setBufferSizeInBytes(minBuf)
+                .build()
+            projAudioRecord = audioRecord
+            val dir = File(filesDir, "media")
+            dir.mkdirs()
+            val file = File(dir, "audio_${System.currentTimeMillis()}_aufnahme.mp3")
+            val rec = MediaRecorder(this)
+            rec.setAudioSource(audioRecord.audioSource)
+            rec.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            rec.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            rec.setAudioSamplingRate(44100)
+            rec.setOutputFile(file.absolutePath)
+            rec.prepare()
+            rec.start()
+            projRecorder = rec
+            projectionFile = file
+            editDialog?.recordButton?.text = getString(R.string.recording)
+        } catch (e: Exception) {
+            Log.e(TAG, "startProjectionRecording failed", e)
+            stopRecording()
+            Toast.makeText(this, R.string.record_failed, Toast.LENGTH_LONG).show()
+        }
+    }
+
     private fun stopRecording() {
+        val b = editDialog
+        if (projRecorder != null || mediaProjection != null) {
+            try {
+                projRecorder?.stop()
+            } catch (_: Exception) {
+            }
+            try {
+                projRecorder?.release()
+            } catch (_: Exception) {
+            }
+            projRecorder = null
+            try {
+                projAudioRecord?.release()
+            } catch (_: Exception) {
+            }
+            projAudioRecord = null
+            try {
+                mediaProjection?.stop()
+            } catch (_: Exception) {
+            }
+            mediaProjection = null
+            stopService(Intent(this, RecordingService::class.java))
+            val file = projectionFile
+            projectionFile = null
+            b?.recordButton?.text = getString(R.string.record_sound)
+            if (file != null && file.exists() && file.length() > 0) {
+                val local = Uri.fromFile(file)
+                pickedUri = local
+                b?.pickedFile?.text = displayName(local)
+                b?.let { setupTrimControls(it, local, 0.0, 0.0, 0.0, 0.0) }
+            } else {
+                Toast.makeText(this, R.string.record_failed, Toast.LENGTH_LONG).show()
+            }
+            return
+        }
         val rec = recorder ?: return
         recorder = null
         val file = recordingFile
@@ -628,7 +765,6 @@ class MainActivity : AppCompatActivity() {
             rec.release()
         } catch (_: Exception) {
         }
-        val b = editDialog
         b?.recordButton?.text = getString(R.string.record_sound)
         if (file != null && file.exists() && file.length() > 0) {
             val local = Uri.fromFile(file)
@@ -758,6 +894,8 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "MainActivity"
         private const val GRID_COLUMNS = 3
         private const val MAX_COLUMNS = 5
+        private const val MODE_MIC = 0
+        private const val MODE_INTERNAL = 1
         private const val FADE_SLIDER_MAX_MS = 10_000
         private val PRESET_COLORS = listOf(
             "#F44336", "#FF9800", "#FFEB3B", "#4CAF50",
