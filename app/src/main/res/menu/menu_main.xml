@@ -3,11 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_stop_all"
-        android:title="@string/stop_all"
-        app:showAsAction="never" />
-
-    <item
         android:id="@+id/action_add_sound"
         android:title="@string/add_tile"
         app:showAsAction="never" />

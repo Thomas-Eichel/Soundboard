@@ -3,9 +3,8 @@
     <string name="app_name">Soundboard</string>
     <string name="app_title_main">Soundboard</string>
     <string name="app_title_sub">für die SV Langendreer 04</string>
-    <string name="stop_all">Alle stoppen</string>
     <string name="stop_now">STOP</string>
-    <string name="settings">Einstellungen</string>
+    <string name="settings">Kategorien</string>
     <string name="export_profile">Profil exportieren…</string>
     <string name="import_profile">Profil laden…</string>
     <string name="profile_saved">Profil gespeichert</string>
@@ -42,8 +41,8 @@
     <string name="trim_start_label">Anfang</string>
     <string name="trim_end_label">Ende (bis Dateiende)</string>
     <string name="add_tile">Kachel hinzufügen</string>
-    <string name="add_header">Zwischenüberschrift hinzufügen</string>
-    <string name="header_hint">Titel der Zwischenüberschrift</string>
+    <string name="add_header">Überschrift hinzufügen</string>
+    <string name="header_hint">Titel der Überschrift</string>
     <string name="header_placeholder">Abschnitt</string>
     <string name="move_up_desc">Kategorie nach oben verschieben</string>
     <string name="move_down_desc">Kategorie nach unten verschieben</string>

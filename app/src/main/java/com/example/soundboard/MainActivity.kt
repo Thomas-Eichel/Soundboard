@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var itemTouchHelper: ItemTouchHelper
     private lateinit var scaleGestureDetector: ScaleGestureDetector
     private var gestureStartColumns = GRID_COLUMNS
+    private var gestureStartSpan = 0f
 
     private var pickedUri: Uri? = null
     private var dialogColor: String? = null
@@ -174,7 +175,7 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerView.setHasFixedSize(true)
         val layoutManager = GridLayoutManager(
             this,
-            settings.columns.coerceIn(MIN_COLUMNS, MAX_COLUMNS)
+            settings.columns.coerceIn(GRID_COLUMNS, MAX_COLUMNS)
         )
         layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
             override fun getSpanSize(position: Int): Int =
@@ -189,13 +190,17 @@ class MainActivity : AppCompatActivity() {
             object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
                 override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
                     gestureStartColumns = layoutManager.spanCount
+                    gestureStartSpan = detector.currentSpan
                     return true
                 }
 
                 override fun onScale(detector: ScaleGestureDetector): Boolean {
-                    val target = (gestureStartColumns / detector.scaleFactor)
+                    if (gestureStartSpan <= 0f) return false
+                    val cumulative = detector.currentSpan / gestureStartSpan
+                    if (cumulative <= 0f) return false
+                    val target = (gestureStartColumns / cumulative)
                         .roundToInt()
-                        .coerceIn(MIN_COLUMNS, MAX_COLUMNS)
+                        .coerceIn(GRID_COLUMNS, MAX_COLUMNS)
                     if (target != layoutManager.spanCount) {
                         layoutManager.spanCount = target
                         settings.columns = target
@@ -205,10 +210,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         )
-        binding.recyclerView.setOnTouchListener { _, event ->
-            scaleGestureDetector.onTouchEvent(event)
-            false
-        }
         itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.Callback() {
             override fun getMovementFlags(
                 recyclerView: RecyclerView,
@@ -244,6 +245,10 @@ class MainActivity : AppCompatActivity() {
             }
         })
         itemTouchHelper.attachToRecyclerView(binding.recyclerView)
+        binding.recyclerView.setOnTouchListener { _, event ->
+            scaleGestureDetector.onTouchEvent(event)
+            false
+        }
         binding.emptyView.setOnClickListener { addTile() }
         updateEmptyView()
     }
@@ -263,7 +268,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun applyColumnsFromSettings() {
         (binding.recyclerView.layoutManager as? GridLayoutManager)?.spanCount =
-            settings.columns.coerceIn(MIN_COLUMNS, MAX_COLUMNS)
+            settings.columns.coerceIn(GRID_COLUMNS, MAX_COLUMNS)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -280,10 +285,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.action_stop_all -> {
-                player.stop()
-                true
-            }
             R.id.action_add_sound -> {
                 addTile()
                 true
@@ -664,7 +665,6 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "MainActivity"
         private const val GRID_COLUMNS = 3
-        private const val MIN_COLUMNS = 1
         private const val MAX_COLUMNS = 5
         private const val FADE_SLIDER_MAX_MS = 10_000
         private val PRESET_COLORS = listOf(
