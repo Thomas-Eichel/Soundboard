@@ -220,7 +220,7 @@ class RecordingService : Service() {
             )
         }
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(getString(R.string.recording))
+            .setContentTitle(getString(R.string.recording_notification))
             .setSmallIcon(R.drawable.ic_launcher)
             .setOngoing(true)
             .build()
