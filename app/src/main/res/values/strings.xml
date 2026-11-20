@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Soundboard</string>
     <string name="app_title_main">Soundboard</string>
-    <string name="app_title_sub">für den SV Langendreer 04</string>
+    <string name="app_title_sub">für die SV Langendreer 04</string>
     <string name="stop_all">Alle stoppen</string>
     <string name="stop_now">STOP</string>
     <string name="settings">Einstellungen</string>
@@ -45,6 +45,8 @@
     <string name="add_header">Zwischenüberschrift hinzufügen</string>
     <string name="header_hint">Titel der Zwischenüberschrift</string>
     <string name="header_placeholder">Abschnitt</string>
+    <string name="move_up_desc">Kategorie nach oben verschieben</string>
+    <string name="move_down_desc">Kategorie nach unten verschieben</string>
     <string name="drag_handle_desc">Ziehen zum Verschieben</string>
     <string name="lock_reorder">Verschieben sperren</string>
     <string name="unlock_reorder">Verschieben erlauben</string>

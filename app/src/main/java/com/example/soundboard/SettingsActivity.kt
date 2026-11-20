@@ -1,9 +1,13 @@
 package com.example.soundboard
 
 import android.os.Bundle
+import android.view.Gravity
+import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import java.util.Collections
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.soundboard.databinding.ActivitySettingsBinding
@@ -49,16 +53,43 @@ class SettingsActivity : AppCompatActivity() {
             binding.categoriesContainer.addView(tv)
             return
         }
-        settings.categories.forEach { cat ->
-            val row = TextView(this)
-            row.text = cat
-            row.setTextAppearance(
+        settings.categories.forEachIndexed { index, cat ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+            }
+            val tv = TextView(this)
+            tv.text = cat
+            tv.setTextAppearance(
                 com.google.android.material.R.style.TextAppearance_Material3_BodyLarge
             )
-            row.setPadding(0, 32, 0, 32)
-            row.setOnClickListener { showEditCategoryDialog(cat) }
+            tv.setPadding(0, 32, 0, 32)
+            tv.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            tv.setOnClickListener { showEditCategoryDialog(cat) }
+            row.addView(tv)
+
+            val up = Button(this)
+            up.text = "▲"
+            up.contentDescription = getString(R.string.move_up_desc)
+            up.setOnClickListener { moveCategory(index, -1) }
+            row.addView(up)
+
+            val down = Button(this)
+            down.text = "▼"
+            down.contentDescription = getString(R.string.move_down_desc)
+            down.setOnClickListener { moveCategory(index, 1) }
+            row.addView(down)
+
             binding.categoriesContainer.addView(row)
         }
+    }
+
+    private fun moveCategory(index: Int, dir: Int) {
+        val j = index + dir
+        if (j < 0 || j >= settings.categories.size) return
+        Collections.swap(settings.categories, index, j)
+        store.saveSettings(settings)
+        rebuildCategoryList()
     }
 
     private fun showAddCategoryDialog() {

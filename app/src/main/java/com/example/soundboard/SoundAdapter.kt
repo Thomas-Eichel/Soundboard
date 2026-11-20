@@ -41,7 +41,11 @@ class SoundAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val sound = items[position]
         val theme = holder.itemView.context.theme
-        val defaultElev = 2f * holder.itemView.resources.displayMetrics.density
+        val density = holder.itemView.resources.displayMetrics.density
+        val defaultElev = 2f * density
+        val lp = holder.itemView.layoutParams
+        lp.height = ((if (sound.isHeader) HEADER_HEIGHT_DP else TILE_HEIGHT_DP) * density).toInt()
+        holder.itemView.layoutParams = lp
 
         if (sound.isHeader) {
             holder.binding.root.cardElevation = 0f
@@ -123,4 +127,9 @@ class SoundAdapter(
     }
 
     override fun getItemCount(): Int = items.size
+
+    companion object {
+        private const val TILE_HEIGHT_DP = 110
+        private const val HEADER_HEIGHT_DP = 32
+    }
 }
