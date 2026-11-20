@@ -9,6 +9,7 @@ import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.media.MediaRecorder
+import android.media.projection.MediaProjectionConfig
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
@@ -26,7 +27,6 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.SeekBar
-import android.widget.Spinner
 import android.widget.Toast
 import java.io.File
 import java.util.Collections
@@ -42,6 +42,7 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.soundboard.databinding.ActivityMainBinding
 import com.example.soundboard.databinding.DialogEditSoundBinding
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 
 class MainActivity : AppCompatActivity() {
 
@@ -115,7 +116,14 @@ class MainActivity : AppCompatActivity() {
                         }
                     } else {
                         val mgr = getSystemService(MediaProjectionManager::class.java)
-                        projectionLauncher.launch(mgr.createScreenCaptureIntent())
+                        val intent = if (Build.VERSION.SDK_INT >= 34) {
+                            mgr.createScreenCaptureIntent(
+                                MediaProjectionConfig.createConfigForDefaultDisplay()
+                            )
+                        } else {
+                            mgr.createScreenCaptureIntent()
+                        }
+                        projectionLauncher.launch(intent)
                     }
                 }
             }
@@ -805,15 +813,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupCategorySpinner(spinner: Spinner, options: List<String>, current: String?) {
-        spinner.adapter =
-            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
+    private fun setupCategorySpinner(
+        view: MaterialAutoCompleteTextView,
+        options: List<String>,
+        current: String?
+    ) {
+        view.setAdapter(ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options))
         val idx = current?.let { options.indexOf(it) } ?: -1
-        spinner.setSelection(if (idx >= 0) idx else 0)
+        view.setText(options[if (idx >= 0) idx else 0], false)
     }
 
-    private fun selectedCategory(spinner: Spinner, options: List<String>): String? {
-        val pos = spinner.selectedItemPosition
+    private fun selectedCategory(view: MaterialAutoCompleteTextView, options: List<String>): String? {
+        val pos = options.indexOf(view.text.toString())
         return if (pos <= 0) null else options[pos]
     }
 

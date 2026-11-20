@@ -13,4 +13,13 @@
         <item name="android:textColor">@android:color/white</item>
     </style>
 
+    <style name="Widget.Soundboard.OutlinedButton" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="shapeAppearance">@style/ShapeAppearance.Soundboard.Angular</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <style name="ShapeAppearance.Soundboard.Angular" parent="ShapeAppearance.Material3.Corner.ExtraSmall">
+        <item name="cornerSize">4dp</item>
+    </style>
+
 </resources>

@@ -129,7 +129,7 @@ class SoundAdapter(
     override fun getItemCount(): Int = items.size
 
     companion object {
-        private const val TILE_HEIGHT_DP = 100
+        private const val TILE_HEIGHT_DP = 92
         private const val HEADER_HEIGHT_DP = 32
     }
 }

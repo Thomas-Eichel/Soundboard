@@ -10,6 +10,7 @@
         android:padding="24dp">
 
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/name_hint">
@@ -34,16 +35,18 @@
                 android:layout_marginEnd="8dp"
                 android:orientation="vertical">
 
-                <TextView
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/category1_label"
-                    android:textAppearance="?attr/textAppearanceBodyMedium" />
+                    android:hint="@string/category1_label">
 
-                <Spinner
-                    android:id="@+id/category1Spinner"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/category1Spinner"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none" />
+                </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <LinearLayout
@@ -53,16 +56,18 @@
                 android:layout_marginStart="8dp"
                 android:orientation="vertical">
 
-                <TextView
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/category2_label"
-                    android:textAppearance="?attr/textAppearanceBodyMedium" />
+                    android:hint="@string/category2_label">
 
-                <Spinner
-                    android:id="@+id/category2Spinner"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/category2Spinner"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none" />
+                </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
         </LinearLayout>
 
@@ -118,7 +123,7 @@
 
             <Button
                 android:id="@+id/pickButton"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                style="@style/Widget.Soundboard.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
@@ -127,7 +132,7 @@
 
             <Button
                 android:id="@+id/recordButton"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                style="@style/Widget.Soundboard.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
