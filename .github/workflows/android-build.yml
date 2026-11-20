@@ -32,8 +32,22 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0"
 
+      - name: Restore stable debug keystore (same signature across builds, so updates install over old versions)
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: soundboard-debug-keystore-v1
+
+      - name: Override debug keystore from secret (optional, survives cache eviction)
+        if: ${{ secrets.SOUNDBOARD_DEBUG_KEYSTORE_B64 != '' }}
+        env:
+          KEYSTORE_B64: ${{ secrets.SOUNDBOARD_DEBUG_KEYSTORE_B64 }}
+        run: |
+          mkdir -p ~/.android
+          printf '%s' "$KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+
       - name: Build APKs (debug + release)
-        run: gradle :app:assembleDebug :app:assembleRelease --no-daemon
+        run: gradle :app:assembleDebug :app:assembleRelease --no-daemon -PversionCode=${{ github.run_number }}
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4
