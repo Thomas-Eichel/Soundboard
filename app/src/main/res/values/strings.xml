@@ -21,7 +21,7 @@
     <string name="name_hint">Name des Buttons</string>
     <string name="fade_in_label">Fade-In (s)</string>
     <string name="fade_out_len_label">Fade-Out (s)</string>
-    <string name="pick_sound">Sound-Datei wählen (MP3)</string>
+    <string name="pick_sound">Sound-Datei (MP3)</string>
     <string name="record_sound">Aufnehmen</string>
     <string name="record_source_title">Aufnahmequelle wählen</string>
     <string name="record_source_mic">Mikrofon</string>
