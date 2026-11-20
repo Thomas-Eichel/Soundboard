@@ -39,6 +39,7 @@ von 0 hochgeblendet.
 3. MP3s z. B. unter `Downloads` ablegen und in der App auswaehlen
 4. Release-APK (minifiziert via R8 + Ressource-Shrinking): `gradle :app:assembleRelease` oder Android Studio: Build > Generate Signed Bundle / APK
 5. Fertige install-faehige APK (debug-signiert): `dist/Soundboard-v1.0.0-debug.apk` im Repo bzw. als CI-Artefakt (`apks`) unter Actions
+6. Updates: Die CI signiert alle Debug-APKs mit demselben Keystore (GitHub-Cache `.ci/debug.keystore`, optional ueber Secret `SOUNDBOARD_DEBUG_KEYSTORE_B64` uebersteuerbar) und erhoeht pro Lauf den `versionCode` - dadurch installiert eine neue APK problemlos ueber die alte (Drueberinstallieren). **Einmalig** muss eine aeltere Installation (anderer Signatur-Schluessel) einmal deinstalliert werden; dabei gehen die App-Daten verloren (Profil vorher als ZIP exportieren)
 
 ## Einstellungen, Kategorien und Profile
 
