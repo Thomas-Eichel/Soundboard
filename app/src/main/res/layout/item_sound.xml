@@ -43,7 +43,7 @@
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:gravity="center"
-                android:lineSpacingMultiplier="0.75"
+                android:lineHeight="20sp"
                 android:maxLines="3"
                 android:textAppearance="?attr/textAppearanceTitleMedium" />
 
