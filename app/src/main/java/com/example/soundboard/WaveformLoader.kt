@@ -46,15 +46,15 @@ object WaveformLoader {
             if (inputFormat.containsKey(MediaFormat.KEY_CHANNEL_COUNT)) inputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) else 1
 
         val codec = MediaCodec.createDecoderByType(mime)
+        val chunkPeaks = ArrayList<Float>()
+        var sampleCount = 0L
+        var chunkMax = 0f
+        var chunkSamples = 0
+        val chunkSize = 512
         try {
             codec.configure(inputFormat, null, null, 0)
             codec.start()
             val info = MediaCodec.BufferInfo()
-            val chunkPeaks = ArrayList<Float>()
-            var sampleCount = 0L
-            var chunkMax = 0f
-            var chunkSamples = 0
-            val chunkSize = 512
             var sawInputEOS = false
             var sawOutputEOS = false
             while (!sawOutputEOS) {
