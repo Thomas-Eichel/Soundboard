@@ -62,6 +62,12 @@ jobs:
           SOUNDBOARD_KEYSTORE: ${{ github.workspace }}/.ci/debug.keystore
         run: gradle :app:assembleDebug :app:assembleRelease --no-daemon -PversionCode=${{ github.run_number }}
 
+      - name: Print signing certs (diagnostic)
+        run: |
+          echo "keystore sha256: $(sha256sum .ci/debug.keystore | cut -d' ' -f1)"
+          keytool -list -v -keystore .ci/debug.keystore -storepass android 2>/dev/null | grep -i "SHA256" | head -2
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep -i "SHA-256" | head -4
+
       - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
