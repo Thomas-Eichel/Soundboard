@@ -265,6 +265,11 @@ class MainActivity : AppCompatActivity() {
             settings.columns.coerceIn(GRID_COLUMNS, MAX_COLUMNS)
         )
         layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+            init {
+                isSpanIndexCacheEnabled = false
+                isSpanGroupIndexCacheEnabled = false
+            }
+
             override fun getSpanSize(position: Int): Int =
                 if (position in sounds.indices && sounds[position].isHeader) {
                     layoutManager.spanCount
@@ -329,6 +334,7 @@ class MainActivity : AppCompatActivity() {
             override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
                 super.clearView(recyclerView, viewHolder)
                 persist()
+                recyclerView.post { adapter.notifyDataSetChanged() }
             }
         })
         itemTouchHelper.attachToRecyclerView(binding.recyclerView)
