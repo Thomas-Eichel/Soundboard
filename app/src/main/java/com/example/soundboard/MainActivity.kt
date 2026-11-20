@@ -1,8 +1,10 @@
 package com.example.soundboard
 
+import android.Manifest
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -49,6 +51,8 @@ class MainActivity : AppCompatActivity() {
     private var gestureStartSpan = 0f
 
     private var pickedUri: Uri? = null
+    private var recorder: MediaRecorder? = null
+    private var recordingFile: File? = null
     private var dialogColor: String? = null
     private var dialogImageUri: Uri? = null
     private var editDialog: DialogEditSoundBinding? = null
@@ -81,6 +85,15 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(this, R.string.copy_failed, Toast.LENGTH_LONG).show()
                 }
+            }
+        }
+
+    private val requestMicPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                if (recorder == null) startRecording() else stopRecording()
+            } else {
+                Toast.makeText(this, R.string.mic_permission_denied, Toast.LENGTH_LONG).show()
             }
         }
 
@@ -323,6 +336,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        if (recorder != null) stopRecording()
         player.release()
         super.onDestroy()
     }
@@ -509,6 +523,14 @@ class MainActivity : AppCompatActivity() {
             pickAudio.launch(arrayOf("audio/*"))
         }
 
+        dialogBinding.recordButton.setOnClickListener {
+            if (recorder == null) {
+                requestMicPermission.launch(Manifest.permission.RECORD_AUDIO)
+            } else {
+                stopRecording()
+            }
+        }
+
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val uri = pickedUri ?: current.uri
@@ -544,8 +566,60 @@ class MainActivity : AppCompatActivity() {
                 dialog.dismiss()
             }
         }
-        dialog.setOnDismissListener { editDialog = null }
+        dialog.setOnDismissListener {
+            if (recorder != null) stopRecording()
+            editDialog = null
+        }
         dialog.show()
+    }
+
+    private fun startRecording() {
+        val b = editDialog ?: return
+        try {
+            val dir = File(filesDir, "media")
+            dir.mkdirs()
+            val file = File(dir, "audio_${System.currentTimeMillis()}_aufnahme.mp3")
+            val rec = MediaRecorder(this)
+            rec.setAudioSource(MediaRecorder.AudioSource.MIC)
+            rec.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            rec.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            rec.setOutputFile(file.absolutePath)
+            rec.prepare()
+            rec.start()
+            recorder = rec
+            recordingFile = file
+            b.recordButton.text = getString(R.string.recording)
+        } catch (e: Exception) {
+            Log.e(TAG, "startRecording failed", e)
+            recorder = null
+            recordingFile = null
+            Toast.makeText(this, R.string.record_failed, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun stopRecording() {
+        val rec = recorder ?: return
+        recorder = null
+        val file = recordingFile
+        recordingFile = null
+        try {
+            rec.stop()
+        } catch (_: Exception) {
+        }
+        try {
+            rec.release()
+        } catch (_: Exception) {
+        }
+        val b = editDialog
+        b?.recordButton?.text = getString(R.string.record_sound)
+        if (file != null && file.exists() && file.length() > 0) {
+            val local = Uri.fromFile(file)
+            pickedUri = local
+            b?.pickedFile?.text = displayName(local)
+            b?.let { setupTrimControls(it, local, 0.0, 0.0, 0.0, 0.0) }
+        } else {
+            Toast.makeText(this, R.string.record_failed, Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun setupTrimControls(

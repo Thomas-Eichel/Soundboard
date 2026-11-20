@@ -110,13 +110,30 @@
             android:layout_height="wrap_content"
             android:text="@string/clear_image" />
 
-        <Button
-            android:id="@+id/pickButton"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="@string/pick_sound" />
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/pickButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="@string/pick_sound" />
+
+            <Button
+                android:id="@+id/recordButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="@string/record_sound" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/pickedFile"

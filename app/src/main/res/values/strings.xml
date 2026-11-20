@@ -22,6 +22,10 @@
     <string name="fade_in_label">Fade-In (s)</string>
     <string name="fade_out_len_label">Fade-Out (s)</string>
     <string name="pick_sound">Sound-Datei wählen (MP3)</string>
+    <string name="record_sound">Aufnehmen</string>
+    <string name="recording">Aufnahme läuft – tippe zum Stoppen</string>
+    <string name="mic_permission_denied">Mikrofon-Berechtigung fehlt</string>
+    <string name="record_failed">Aufnahme fehlgeschlagen</string>
     <string name="no_sound_picked">Noch keine Datei gewählt</string>
     <string name="pick_sound_first">Bitte zuerst eine Sound-Datei wählen</string>
     <string name="category1_label">Kategorie 1</string>
