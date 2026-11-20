@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.media.MediaMetadataRetriever
 import android.media.MediaRecorder
 import android.media.projection.MediaProjectionConfig
 import android.media.projection.MediaProjectionManager
@@ -30,6 +31,7 @@ import android.widget.SeekBar
 import android.widget.Toast
 import java.io.File
 import java.util.Collections
+import java.util.concurrent.Executors
 import kotlin.concurrent.thread
 import kotlin.math.roundToInt
 import androidx.activity.result.contract.ActivityResultContracts
@@ -57,6 +59,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scaleGestureDetector: ScaleGestureDetector
     private var gestureStartColumns = GRID_COLUMNS
     private var gestureStartSpan = 0f
+    private val durationExecutor = Executors.newSingleThreadExecutor()
 
     private var pickedUri: Uri? = null
     private var recorder: MediaRecorder? = null
@@ -206,6 +209,8 @@ class MainActivity : AppCompatActivity() {
                     sounds.clear()
                     sounds.addAll(result.sounds)
                     store.save(sounds)
+                    adapter.playCounts.clear()
+                    loadDurations()
                     adapter.playingId = null
                     binding.stopButton.isEnabled = false
                     adapter.notifyDataSetChanged()
@@ -240,7 +245,9 @@ class MainActivity : AppCompatActivity() {
                     showHeaderDialog(pos)
                 } else if (s.uri != null) {
                     player.play(s)
+                    adapter.playCounts[s.id] = (adapter.playCounts[s.id] ?: 0) + 1
                     adapter.playingId = s.id
+                    adapter.notifyItemChanged(pos)
                     binding.stopButton.isEnabled = true
                 } else showEditDialog(pos)
             },
@@ -350,6 +357,7 @@ class MainActivity : AppCompatActivity() {
         )
         binding.emptyView.setOnClickListener { addTile() }
         updateEmptyView()
+        loadDurations()
     }
 
     override fun onResume() {
@@ -428,6 +436,7 @@ class MainActivity : AppCompatActivity() {
         } catch (_: Exception) {
         }
         player.release()
+        durationExecutor.shutdown()
         super.onDestroy()
     }
 
@@ -669,6 +678,7 @@ class MainActivity : AppCompatActivity() {
                     fadeOutSec = dialogBinding.fadeOutLen.progress / 1000.0
                 )
                 persist()
+                loadDurations()
                 adapter.notifyItemChanged(slot)
                 dialog.dismiss()
             }
@@ -837,6 +847,39 @@ class MainActivity : AppCompatActivity() {
     private fun persist() {
         store.save(sounds)
         updateEmptyView()
+    }
+
+    private fun loadDurations() {
+        val snapshot = sounds.filter { !it.isHeader && it.uri != null }
+        durationExecutor.execute {
+            val result = HashMap<Long, Long>()
+            for (s in snapshot) {
+                val uri = s.uri ?: continue
+                val retriever = MediaMetadataRetriever()
+                try {
+                    val path = uri.path
+                    if (uri.scheme == "file" && path != null) {
+                        retriever.setDataSource(path)
+                    } else {
+                        retriever.setDataSource(this, uri)
+                    }
+                    val d = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                        ?.toLongOrNull()
+                    if (d != null && d > 0) result[s.id] = d
+                } catch (_: Exception) {
+                } finally {
+                    try {
+                        retriever.release()
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+            runOnUiThread {
+                adapter.durationsMs.clear()
+                adapter.durationsMs.putAll(result)
+                adapter.notifyDataSetChanged()
+            }
+        }
     }
 
     private fun updateEmptyView() {

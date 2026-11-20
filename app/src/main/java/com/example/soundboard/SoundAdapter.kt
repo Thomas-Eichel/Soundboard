@@ -30,6 +30,9 @@ class SoundAdapter(
             notifyDataSetChanged()
         }
 
+    val playCounts = HashMap<Long, Int>()
+    val durationsMs = HashMap<Long, Long>()
+
     class ViewHolder(val binding: ItemSoundBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -54,6 +57,8 @@ class SoundAdapter(
             holder.binding.buttonImage.isVisible = false
             holder.binding.buttonCategory1.isVisible = false
             holder.binding.buttonCategory2.isVisible = false
+            holder.binding.playCount.isVisible = false
+            holder.binding.duration.isVisible = false
             holder.binding.buttonName.text = sound.name.ifEmpty {
                 holder.itemView.context.getString(R.string.header_placeholder)
             }
@@ -67,6 +72,21 @@ class SoundAdapter(
             holder.binding.buttonCategory1.isVisible = !sound.category1.isNullOrEmpty()
             holder.binding.buttonCategory2.text = sound.category2 ?: ""
             holder.binding.buttonCategory2.isVisible = !sound.category2.isNullOrEmpty()
+
+            val count = playCounts[sound.id] ?: 0
+            if (count > 0) {
+                holder.binding.playCount.text = count.toString()
+                holder.binding.playCount.isVisible = true
+            } else {
+                holder.binding.playCount.isVisible = false
+            }
+            val durMs = durationsMs[sound.id]
+            if (durMs != null && durMs > 0) {
+                holder.binding.duration.text = formatDuration(durMs)
+                holder.binding.duration.isVisible = true
+            } else {
+                holder.binding.duration.isVisible = false
+            }
 
             val hasImage = sound.imageUri != null
             if (hasImage) {
@@ -130,5 +150,17 @@ class SoundAdapter(
         private const val TILE_HEIGHT_DP = 92
         private const val HEADER_HEIGHT_DP = 38
         private val DEFAULT_TILE_COLOR = Color.parseColor("#E0E0E0")
+
+        private fun formatDuration(ms: Long): String {
+            val totalSec = ms / 1000
+            val h = totalSec / 3600
+            val m = (totalSec % 3600) / 60
+            val s = totalSec % 60
+            return if (h > 0) {
+                String.format("%d:%02d:%02d", h, m, s)
+            } else {
+                String.format("%d:%02d", m, s)
+            }
+        }
     }
 }
