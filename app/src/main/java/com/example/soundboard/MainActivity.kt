@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
     private var pickedUri: Uri? = null
     private var recorder: MediaRecorder? = null
     private var recordingFile: File? = null
+    private var pendingAudioSource = MediaRecorder.AudioSource.MIC
     private var dialogColor: String? = null
     private var dialogImageUri: Uri? = null
     private var editDialog: DialogEditSoundBinding? = null
@@ -91,7 +92,7 @@ class MainActivity : AppCompatActivity() {
     private val requestMicPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {
-                if (recorder == null) startRecording() else stopRecording()
+                if (recorder == null) startRecording(pendingAudioSource) else stopRecording()
             } else {
                 Toast.makeText(this, R.string.mic_permission_denied, Toast.LENGTH_LONG).show()
             }
@@ -525,7 +526,24 @@ class MainActivity : AppCompatActivity() {
 
         dialogBinding.recordButton.setOnClickListener {
             if (recorder == null) {
-                requestMicPermission.launch(Manifest.permission.RECORD_AUDIO)
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.record_source_title)
+                    .setItems(
+                        arrayOf(
+                            getString(R.string.record_source_mic),
+                            getString(R.string.record_source_internal)
+                        )
+                    ) { _, which ->
+                        pendingAudioSource =
+                            if (which == 0) {
+                                MediaRecorder.AudioSource.MIC
+                            } else {
+                                MediaRecorder.AudioSource.REMOTE_SUBMIX
+                            }
+                        requestMicPermission.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .show()
             } else {
                 stopRecording()
             }
@@ -573,14 +591,14 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun startRecording() {
+    private fun startRecording(audioSource: Int) {
         val b = editDialog ?: return
         try {
             val dir = File(filesDir, "media")
             dir.mkdirs()
             val file = File(dir, "audio_${System.currentTimeMillis()}_aufnahme.mp3")
             val rec = MediaRecorder(this)
-            rec.setAudioSource(MediaRecorder.AudioSource.MIC)
+            rec.setAudioSource(audioSource)
             rec.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             rec.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             rec.setOutputFile(file.absolutePath)

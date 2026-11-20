@@ -23,6 +23,9 @@
     <string name="fade_out_len_label">Fade-Out (s)</string>
     <string name="pick_sound">Sound-Datei wählen (MP3)</string>
     <string name="record_sound">Aufnehmen</string>
+    <string name="record_source_title">Aufnahmequelle wählen</string>
+    <string name="record_source_mic">Mikrofon</string>
+    <string name="record_source_internal">Abgespielter Sound (Geräte-Audio)</string>
     <string name="recording">Aufnahme läuft – tippe zum Stoppen</string>
     <string name="mic_permission_denied">Mikrofon-Berechtigung fehlt</string>
     <string name="record_failed">Aufnahme fehlgeschlagen</string>
