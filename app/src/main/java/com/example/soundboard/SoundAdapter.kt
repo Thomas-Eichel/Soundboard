@@ -84,8 +84,8 @@ class SoundAdapter(
                 tv.data
             }
             holder.binding.buttonName.setTextColor(textColor)
-            holder.binding.buttonCategory1.setTextColor(textColor)
-            holder.binding.buttonCategory2.setTextColor(textColor)
+            holder.binding.buttonCategory1.setTextColor(Color.WHITE)
+            holder.binding.buttonCategory2.setTextColor(Color.WHITE)
 
             val bgColor = sound.backgroundColor?.let { hex ->
                 try {

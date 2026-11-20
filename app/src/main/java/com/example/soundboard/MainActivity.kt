@@ -568,8 +568,8 @@ class MainActivity : AppCompatActivity() {
         val density = resources.displayMetrics.density
         (listOf<String?>(null) + PRESET_COLORS).forEach { hex ->
             val swatch = View(this).apply {
-                val size = (36 * density).toInt()
-                val margin = (8 * density).toInt()
+                val size = (30 * density).toInt()
+                val margin = (6 * density).toInt()
                 layoutParams = LinearLayout.LayoutParams(size, size).apply { marginEnd = margin }
                 background = GradientDrawable().apply {
                     shape = GradientDrawable.OVAL
@@ -625,7 +625,7 @@ class MainActivity : AppCompatActivity() {
         private const val GRID_COLUMNS = 3
         private const val FADE_SLIDER_MAX_MS = 10_000
         private val PRESET_COLORS = listOf(
-            "#F44336", "#FF9800", "#FFEB3B", "#4CAF50", "#009688",
+            "#F44336", "#FF9800", "#FFEB3B", "#4CAF50",
             "#00B0FF", "#E0E0E0"
         )
     }

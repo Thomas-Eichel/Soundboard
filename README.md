@@ -44,7 +44,7 @@ von 0 hochgeblendet.
 
 - Menue **Einstellungen** (`SettingsActivity`): zentrale Liste der Kategorien verwalten (hinzufuegen / umbenennen / loeschen / per ▲▼ umsortieren — die Reihenfolge wird gespeichert und ueberall uebernommen; Aenderungen an Namen werden auf alle Sounds uebernommen)
 - Pro Sound koennen im Bearbeiten-Dialog **zwei Kategorien** aus der zentralen Liste vergeben werden; sie werden auf der Kachel angezeigt
-- **Kachel-Design pro Sound**: Akzentfarbe (kompakter Preset-Farbwähler: erste 5 + letzte 2 Farben) oder Grafikdatei (Bild), Text wird bei Grafik weiss; im Profil-ZIP enthalten (`backgroundColor` + `image/<slot>.bin`)
+- **Kachel-Design pro Sound**: Akzentfarbe (kompakte Preset-Farbwahl) oder Grafikdatei (Bild); Kategorie-Texte auf der Kachel immer weiss; im Profil-ZIP enthalten (`backgroundColor` + `image/<slot>.bin`)
 - Menue **Profil exportieren / Profil laden**: komplettes Profil als eine ZIP-Datei (`soundboard-profil.zip`) ueber den System-Dateidialog. Inhalt: `profile.json` (Version, Einstellungen inkl. `reorderLocked`, alle Kacheln in Reihenfolge mit Name/Fade/Kategorien/Ausschnitt `startSec`/`endSec`/`fadeInSec`/`fadeOutSec`/Design) + `audio/<slot>.mp3` (eingebettete Audiodaten). Beim Laden werden die MP3s ins app-private Verzeichnis entpackt — das Profil ist damit geraeteuebergreifend nutzbar
 - Gerade abgespielter Sound wird auf seiner Kachel farblich hervorgehoben (Rand)
 

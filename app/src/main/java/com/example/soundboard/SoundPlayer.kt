@@ -113,10 +113,14 @@ class SoundPlayer(private val context: Context) {
                 } catch (_: Exception) {
                 }
             }
-            mp.start()
             val fadeInMs = (sound.fadeInSec * 1000.0).toLong()
             if (fadeInMs > 0) {
                 setVolumeSafe(0f)
+            } else {
+                setVolumeSafe(1f)
+            }
+            mp.start()
+            if (fadeInMs > 0) {
                 startFade(0f, 1f, fadeInMs, stopAtEnd = false)
             }
             handler.post(watchdog)
