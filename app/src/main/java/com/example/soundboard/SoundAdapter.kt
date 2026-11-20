@@ -56,6 +56,7 @@ class SoundAdapter(
             holder.binding.buttonCategory1.isVisible = false
             holder.binding.buttonCategory2.isVisible = false
             holder.binding.footer.isVisible = false
+            holder.binding.contentLayout.setPadding(0, 0, 0, 0)
             holder.binding.buttonName.text = sound.name.ifEmpty {
                 holder.itemView.context.getString(R.string.header_placeholder)
             }
@@ -65,6 +66,8 @@ class SoundAdapter(
         } else {
             holder.binding.card.cardElevation = defaultElev
             holder.binding.footer.isVisible = true
+            val pad = (8 * density).toInt()
+            holder.binding.contentLayout.setPadding(pad, pad, pad, pad)
             holder.binding.buttonName.text = sound.name.ifEmpty { "Sound ${position + 1}" }
             holder.binding.buttonCategory1.text = sound.category1 ?: ""
             holder.binding.buttonCategory1.isVisible = !sound.category1.isNullOrEmpty()
@@ -158,7 +161,7 @@ class SoundAdapter(
 
     companion object {
         private const val TILE_HEIGHT_DP = 92
-        private const val HEADER_HEIGHT_DP = 38
+        private const val HEADER_HEIGHT_DP = 30
         private val DEFAULT_TILE_COLOR = Color.parseColor("#E0E0E0")
 
         private fun formatDuration(ms: Long): String {

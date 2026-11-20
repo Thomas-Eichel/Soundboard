@@ -9,10 +9,13 @@
         android:id="@+id/card"
         android:layout_width="match_parent"
         android:layout_height="92dp"
-        android:layout_margin="6dp"
+        android:layout_marginStart="6dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginEnd="6dp"
+        android:layout_marginBottom="2dp"
         android:clickable="true"
         android:focusable="true"
-        app:cardCornerRadius="14dp"
+        app:cardCornerRadius="0dp"
         app:cardElevation="2dp">
 
         <FrameLayout
@@ -39,6 +42,7 @@
                 android:textSize="20sp" />
 
             <LinearLayout
+                android:id="@+id/contentLayout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical"
@@ -101,7 +105,7 @@
             android:layout_height="wrap_content"
             android:gravity="start|bottom"
             android:singleLine="true"
-            android:textColor="#9E9E9E"
+            android:textColor="#757575"
             android:textSize="10sp"
             android:visibility="gone" />
 
@@ -116,7 +120,7 @@
             android:layout_height="wrap_content"
             android:gravity="end|bottom"
             android:singleLine="true"
-            android:textColor="#9E9E9E"
+            android:textColor="#757575"
             android:textSize="10sp" />
     </LinearLayout>
 
