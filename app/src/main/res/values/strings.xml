@@ -26,7 +26,7 @@
     <string name="record_source_title">Aufnahmequelle wählen</string>
     <string name="record_source_mic">Mikrofon</string>
     <string name="record_source_internal">Abgespielter Sound (Geräte-Audio)</string>
-    <string name="recording">Aufnahme läuft – tippe zum Stoppen</string>
+    <string name="recording">Stoppen</string>
     <string name="recording_channel">Aufnahme</string>
     <string name="mic_permission_denied">Mikrofon-Berechtigung fehlt</string>
     <string name="record_failed">Aufnahme fehlgeschlagen</string>
