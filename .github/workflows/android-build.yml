@@ -39,12 +39,13 @@ jobs:
           key: soundboard-debug-keystore-v1
 
       - name: Override debug keystore from secret (optional, survives cache eviction)
-        if: ${{ secrets.SOUNDBOARD_DEBUG_KEYSTORE_B64 != '' }}
         env:
           KEYSTORE_B64: ${{ secrets.SOUNDBOARD_DEBUG_KEYSTORE_B64 }}
         run: |
-          mkdir -p ~/.android
-          printf '%s' "$KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+          if [ -n "$KEYSTORE_B64" ]; then
+            mkdir -p ~/.android
+            printf '%s' "$KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+          fi
 
       - name: Build APKs (debug + release)
         run: gradle :app:assembleDebug :app:assembleRelease --no-daemon -PversionCode=${{ github.run_number }}
