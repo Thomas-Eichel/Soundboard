@@ -42,12 +42,15 @@ class SoundPlayer(private val context: Context) {
             } catch (_: Exception) {
                 -1L
             }
-            val limitMs = (c.durationSec * 1000.0).toLong()
-            val remaining = when {
-                limitMs > 0 && (total <= 0 || limitMs < total) -> limitMs - pos
-                total > 0 -> total - pos
+            val startMs = (c.startSec * 1000.0).toLong()
+            val endLimit = when {
+                c.endSec > 0 -> (c.endSec * 1000.0).toLong()
+                total > 0 -> total
                 else -> Long.MAX_VALUE
             }
+            val durLimit =
+                if (c.durationSec > 0) startMs + (c.durationSec * 1000.0).toLong() else Long.MAX_VALUE
+            val remaining = minOf(endLimit, durLimit) - pos
             if (remaining <= 0) {
                 stopInternal()
                 return
@@ -94,6 +97,13 @@ class SoundPlayer(private val context: Context) {
         )
         p.setDataSource(context, sound.uri)
         p.setOnPreparedListener { mp ->
+            val startMs = (sound.startSec * 1000.0).toLong()
+            if (startMs > 0) {
+                try {
+                    mp.seekTo(startMs.toInt())
+                } catch (_: Exception) {
+                }
+            }
             mp.start()
             handler.post(watchdog)
         }

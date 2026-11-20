@@ -40,4 +40,7 @@
     <string name="clear_image">Grafik entfernen</string>
     <string name="no_image_picked">Keine Grafik gewählt</string>
     <string name="copy_failed">Datei konnte nicht gelesen werden — bitte erneut wählen</string>
+    <string name="trim_section_label">Ausschnitt wählen (Welle)</string>
+    <string name="trim_start_label">Anfang</string>
+    <string name="trim_end_label">Ende (bis Dateiende)</string>
 </resources>

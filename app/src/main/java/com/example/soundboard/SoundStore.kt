@@ -36,7 +36,9 @@ class SoundStore(context: Context) {
                 category1 = o.optNullableString("category1"),
                 category2 = o.optNullableString("category2"),
                 backgroundColor = o.optNullableString("backgroundColor"),
-                imageUri = o.optNullableString("imageUri")?.let { Uri.parse(it) }
+                imageUri = o.optNullableString("imageUri")?.let { Uri.parse(it) },
+                startSec = o.optDouble("startSec", 0.0),
+                endSec = o.optDouble("endSec", 0.0)
             )
         }
     }
@@ -55,6 +57,8 @@ class SoundStore(context: Context) {
                     .put("category2", s.category2 ?: "")
                     .put("backgroundColor", s.backgroundColor ?: "")
                     .put("imageUri", s.imageUri?.toString() ?: "")
+                    .put("startSec", s.startSec)
+                    .put("endSec", s.endSec)
             )
         }
         prefs.edit().putString(KEY_SOUNDS, arr.toString()).apply()

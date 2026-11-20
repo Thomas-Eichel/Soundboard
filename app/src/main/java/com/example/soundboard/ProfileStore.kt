@@ -62,6 +62,8 @@ class ProfileStore(private val context: Context) {
                                 .put("backgroundColor", s.backgroundColor ?: JSONObject.NULL)
                                 .put("audioEntry", audioEntry)
                                 .put("imageEntry", imageEntry)
+                                .put("startSec", s.startSec)
+                                .put("endSec", s.endSec)
                         )
                     }
                     val root = JSONObject()
@@ -168,7 +170,9 @@ class ProfileStore(private val context: Context) {
                         backgroundColor = o.optNullableString("backgroundColor"),
                         imageUri = if (imageFile != null && imageFile.exists() && imageFile.length() > 0) {
                             Uri.fromFile(imageFile)
-                        } else null
+                        } else null,
+                        startSec = o.optDouble("startSec", 0.0),
+                        endSec = o.optDouble("endSec", 0.0)
                     )
                 }
                 result = ProfileResult(settings, slots)

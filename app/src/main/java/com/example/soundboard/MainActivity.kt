@@ -14,6 +14,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.Toast
 import java.io.File
@@ -51,6 +52,7 @@ class MainActivity : AppCompatActivity() {
                 if (local != null) {
                     pickedUri = local
                     editDialog?.pickedFile?.text = label
+                    editDialog?.let { setupTrimControls(it, local, 0.0, 0.0) }
                 } else {
                     Toast.makeText(this, R.string.copy_failed, Toast.LENGTH_LONG).show()
                 }
@@ -281,6 +283,7 @@ class MainActivity : AppCompatActivity() {
         dialogBinding.fadeSwitch.isChecked = current.fadeOut
         dialogBinding.pickedFile.text =
             current.uri?.let { displayName(it) } ?: getString(R.string.no_sound_picked)
+        setupTrimControls(dialogBinding, current.uri, current.startSec, current.endSec)
 
         val categoryOptions = listOf(getString(R.string.no_category)) + settings.categories
         setupCategorySpinner(dialogBinding.category1Spinner, categoryOptions, current.category1)
@@ -298,6 +301,23 @@ class MainActivity : AppCompatActivity() {
             dialogImageUri = null
             dialogBinding.pickedImage.text = getString(R.string.no_image_picked)
         }
+
+        dialogBinding.trimStart.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (progress > dialogBinding.trimEnd.progress) dialogBinding.trimEnd.progress = progress
+                updateTrimUi(dialogBinding)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+        dialogBinding.trimEnd.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (progress < dialogBinding.trimStart.progress) dialogBinding.trimStart.progress = progress
+                updateTrimUi(dialogBinding)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
 
         val dialog = AlertDialog.Builder(this)
             .setTitle(if (current.uri == null) R.string.add_sound else R.string.edit_sound)
@@ -343,7 +363,15 @@ class MainActivity : AppCompatActivity() {
                     category1 = selectedCategory(dialogBinding.category1Spinner, categoryOptions),
                     category2 = selectedCategory(dialogBinding.category2Spinner, categoryOptions),
                     backgroundColor = dialogColor,
-                    imageUri = dialogImageUri
+                    imageUri = dialogImageUri,
+                    startSec = if (dialogBinding.trimStart.max > 0) {
+                        dialogBinding.trimStart.progress / 1000.0
+                    } else 0.0,
+                    endSec = if (dialogBinding.trimEnd.max > 0 &&
+                        dialogBinding.trimEnd.progress < dialogBinding.trimEnd.max
+                    ) {
+                        dialogBinding.trimEnd.progress / 1000.0
+                    } else 0.0
                 )
                 persist()
                 adapter.notifyItemChanged(slot)
@@ -352,6 +380,51 @@ class MainActivity : AppCompatActivity() {
         }
         dialog.setOnDismissListener { editDialog = null }
         dialog.show()
+    }
+
+    private fun setupTrimControls(
+        dialogBinding: DialogEditSoundBinding,
+        uri: Uri?,
+        startSec: Double,
+        endSec: Double
+    ) {
+        val wv = dialogBinding.waveformView
+        wv.tag = uri
+        wv.peaks = FloatArray(0)
+        dialogBinding.trimStart.max = 0
+        dialogBinding.trimEnd.max = 0
+        dialogBinding.trimStart.isEnabled = false
+        dialogBinding.trimEnd.isEnabled = false
+        updateTrimUi(dialogBinding)
+        if (uri == null) return
+        WaveformLoader.load(this, uri) { res ->
+            if (editDialog !== dialogBinding || wv.tag != uri) return@load
+            if (res == null) return@load
+            val durMs = res.durationMs.coerceAtLeast(1)
+            wv.peaks = res.peaks
+            dialogBinding.trimStart.max = durMs.toInt()
+            dialogBinding.trimEnd.max = durMs.toInt()
+            val s = (startSec * 1000).toLong().coerceIn(0, durMs)
+            val e = if (endSec > 0) (endSec * 1000).toLong().coerceIn(s, durMs) else durMs
+            dialogBinding.trimStart.progress = s.toInt()
+            dialogBinding.trimEnd.progress = e.toInt()
+            dialogBinding.trimStart.isEnabled = true
+            dialogBinding.trimEnd.isEnabled = true
+            updateTrimUi(dialogBinding)
+        }
+    }
+
+    private fun updateTrimUi(dialogBinding: DialogEditSoundBinding) {
+        val dur = dialogBinding.trimStart.max.toLong()
+        val s = dialogBinding.trimStart.progress.toLong()
+        val e = dialogBinding.trimEnd.progress.toLong()
+        dialogBinding.trimStartLabel.text =
+            getString(R.string.trim_start_label) + ": " + String.format("%.1f", s / 1000.0) + " s"
+        dialogBinding.trimEndLabel.text =
+            getString(R.string.trim_end_label) + ": " + String.format("%.1f", e / 1000.0) + " s"
+        dialogBinding.waveformView.selStart = if (dur > 0) s.toFloat() / dur else 0f
+        dialogBinding.waveformView.selEnd = if (dur > 0) e.toFloat() / dur else 1f
+        dialogBinding.waveformView.invalidate()
     }
 
     private fun rebuildColorRow(dialogBinding: DialogEditSoundBinding) {

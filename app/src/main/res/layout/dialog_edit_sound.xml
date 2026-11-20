@@ -126,6 +126,46 @@
             android:text="@string/no_sound_picked"
             android:textAppearance="?attr/textAppearanceBodySmall" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/trim_section_label"
+            android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+        <com.example.soundboard.WaveformView
+            android:id="@+id/waveformView"
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:layout_marginTop="8dp"
+            android:background="#14000000" />
+
+        <TextView
+            android:id="@+id/trimStartLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/trim_start_label"
+            android:textAppearance="?attr/textAppearanceBodySmall" />
+
+        <SeekBar
+            android:id="@+id/trimStart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/trimEndLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/trim_end_label"
+            android:textAppearance="?attr/textAppearanceBodySmall" />
+
+        <SeekBar
+            android:id="@+id/trimEnd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
     </LinearLayout>
 
 </ScrollView>

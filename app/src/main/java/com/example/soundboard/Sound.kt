@@ -11,5 +11,7 @@ data class Sound(
     val category1: String? = null,
     val category2: String? = null,
     val backgroundColor: String? = null,
-    val imageUri: Uri? = null
+    val imageUri: Uri? = null,
+    val startSec: Double = 0.0,
+    val endSec: Double = 0.0
 )
