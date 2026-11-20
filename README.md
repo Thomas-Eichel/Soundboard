@@ -5,6 +5,7 @@ Einfache Android-Soundboard-App (Kotlin, min. Android 8.0 / API 26).
 ## Funktionen
 
 - Sound-Buttons im Raster (3 Spalten), beliebig viele Kacheln: ueber das Menue **Kachel hinzufuegen**, per **Löschen** im Bearbeiten-Dialog entfernen, per **Drag & Drop** (Griff rechts oben) verschieben — die Reihenfolge wird persistiert und das Verschieben kann im Menue **gesperrt** werden
+- **Zwischenüberschriften** als Gruppentrenner: Menue **Zwischenüberschrift hinzufügen** legt ein unauffälliges Titel-Feld über die volle Breite an (Text per Tap editierbar, verschiebbar/löschbar, wird persistiert und im Profil-ZIP mitgeführt)
 - Pro Button: MP3-/Audiodatei hinterlegen (per Dateiauswahl, URI wird persistent gespeichert)
 - Pro Button einstellbar:
   - **Ausschnitt waehlbar**: Wellenform im Bearbeiten-Dialog, Anfang/Ende ueber zwei Schieberegler (`startSec`/`endSec` in Sekunden, `0` = Dateianfang bzw. Dateiende)

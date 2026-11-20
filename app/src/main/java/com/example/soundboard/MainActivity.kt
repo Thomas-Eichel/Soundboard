@@ -8,11 +8,13 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.OpenableColumns
+import android.text.InputType
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Spinner
@@ -141,14 +143,17 @@ class MainActivity : AppCompatActivity() {
             onClick = { pos ->
                 if (pos < 0 || pos >= sounds.size) return@SoundAdapter
                 val s = sounds[pos]
-                if (s.uri != null) {
+                if (s.isHeader) {
+                    showHeaderDialog(pos)
+                } else if (s.uri != null) {
                     player.play(s)
                     adapter.playingId = s.id
                     binding.stopButton.isEnabled = true
                 } else showEditDialog(pos)
             },
             onLongClick = { pos ->
-                if (pos >= 0 && pos < sounds.size) showEditDialog(pos)
+                if (pos < 0 || pos >= sounds.size) return@SoundAdapter
+                if (sounds[pos].isHeader) showHeaderDialog(pos) else showEditDialog(pos)
             },
             onStartDrag = { holder ->
                 if (!settings.reorderLocked) itemTouchHelper.startDrag(holder)
@@ -162,7 +167,12 @@ class MainActivity : AppCompatActivity() {
         binding.stopButton.setOnClickListener { player.stopWithQuickFade() }
 
         binding.recyclerView.setHasFixedSize(true)
-        binding.recyclerView.layoutManager = GridLayoutManager(this, GRID_COLUMNS)
+        val layoutManager = GridLayoutManager(this, GRID_COLUMNS)
+        layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+            override fun getSpanSize(position: Int): Int =
+                if (position in sounds.indices && sounds[position].isHeader) GRID_COLUMNS else 1
+        }
+        binding.recyclerView.layoutManager = layoutManager
         binding.recyclerView.adapter = adapter
         itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.Callback() {
             override fun getMovementFlags(
@@ -237,6 +247,10 @@ class MainActivity : AppCompatActivity() {
                 addTile()
                 true
             }
+            R.id.action_add_header -> {
+                addHeader()
+                true
+            }
             R.id.action_toggle_lock -> {
                 settings.reorderLocked = !settings.reorderLocked
                 store.saveSettings(settings)
@@ -281,6 +295,39 @@ class MainActivity : AppCompatActivity() {
         persist()
         adapter.notifyItemInserted(sounds.size - 1)
         binding.recyclerView.smoothScrollToPosition(sounds.size - 1)
+    }
+
+    private fun addHeader() {
+        val pos = sounds.size
+        sounds.add(Sound(System.currentTimeMillis() + idSeq++, "", null, isHeader = true))
+        persist()
+        adapter.notifyItemInserted(pos)
+        binding.recyclerView.smoothScrollToPosition(pos)
+        showHeaderDialog(pos)
+    }
+
+    private fun showHeaderDialog(slot: Int) {
+        if (slot < 0 || slot >= sounds.size) return
+        val current = sounds[slot]
+        val input = EditText(this)
+        input.inputType = InputType.TYPE_CLASS_TEXT
+        input.setText(current.name)
+        input.hint = getString(R.string.header_hint)
+        input.setSelection(input.text.length)
+        AlertDialog.Builder(this)
+            .setView(input)
+            .setPositiveButton(R.string.save) { _, _ ->
+                sounds[slot] = current.copy(name = input.text.toString().trim())
+                persist()
+                adapter.notifyItemChanged(slot)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .setNeutralButton(R.string.delete) { _, _ ->
+                sounds.removeAt(slot)
+                persist()
+                adapter.notifyItemRemoved(slot)
+            }
+            .show()
     }
 
     private fun copyPickedToPrivate(uri: Uri, prefix: String, onDone: (Uri?) -> Unit) {
@@ -406,7 +453,6 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton(R.string.save) { _, _ -> }
             .setNegativeButton(R.string.cancel) { _, _ -> }
             .apply {
-                if (current.uri == null) setTitle(R.string.add_sound)
                 setNeutralButton(R.string.delete) { _, _ ->
                     deletePrivateMedia(current.uri)
                     deletePrivateMedia(current.imageUri)
@@ -560,7 +606,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateEmptyView() {
-        binding.emptyView.isVisible = sounds.all { it.uri == null }
+        binding.emptyView.isVisible = sounds.isEmpty()
     }
 
     private fun displayName(uri: Uri): String {
@@ -580,7 +626,7 @@ class MainActivity : AppCompatActivity() {
         private const val FADE_SLIDER_MAX_MS = 10_000
         private val PRESET_COLORS = listOf(
             "#F44336", "#FF9800", "#FFEB3B", "#4CAF50", "#009688",
-            "#2196F3", "#673AB7", "#E91E63", "#795548", "#607D8B"
+            "#2196F3", "#673AB7", "#E91E63", "#795548", "#00B0FF", "#E0E0E0"
         )
     }
 }

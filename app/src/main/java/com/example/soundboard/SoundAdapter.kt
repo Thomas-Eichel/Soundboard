@@ -40,52 +40,69 @@ class SoundAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val sound = items[position]
-        holder.binding.buttonName.text = sound.name.ifEmpty { "Sound ${position + 1}" }
-        val categories = listOfNotNull(sound.category1, sound.category2).joinToString(", ")
-        holder.binding.buttonCategories.text = categories
-        holder.binding.buttonCategories.isVisible = categories.isNotEmpty()
-
         val theme = holder.itemView.context.theme
-        val hasImage = sound.imageUri != null
-        if (hasImage) {
-            holder.binding.buttonImage.isVisible = true
-            holder.binding.buttonImage.setImageURI(sound.imageUri)
-        } else {
-            holder.binding.buttonImage.setImageDrawable(null)
+        val defaultElev = 2f * holder.itemView.resources.displayMetrics.density
+
+        if (sound.isHeader) {
+            holder.binding.root.cardElevation = 0f
+            holder.binding.root.setCardBackgroundColor(Color.TRANSPARENT)
+            holder.binding.root.setStrokeWidth(0)
             holder.binding.buttonImage.isVisible = false
-        }
-        val textColor = if (hasImage) {
-            Color.WHITE
-        } else {
+            holder.binding.buttonCategories.isVisible = false
+            holder.binding.buttonName.text = sound.name.ifEmpty {
+                holder.itemView.context.getString(R.string.header_placeholder)
+            }
             val tv = TypedValue()
             theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurface, tv, true)
-            tv.data
-        }
-        holder.binding.buttonName.setTextColor(textColor)
-        holder.binding.buttonCategories.setTextColor(textColor)
+            holder.binding.buttonName.setTextColor((tv.data and 0x00FFFFFF) or 0x99000000.toInt())
+        } else {
+            holder.binding.root.cardElevation = defaultElev
+            holder.binding.buttonName.text = sound.name.ifEmpty { "Sound ${position + 1}" }
+            val categories = listOfNotNull(sound.category1, sound.category2).joinToString(", ")
+            holder.binding.buttonCategories.text = categories
+            holder.binding.buttonCategories.isVisible = categories.isNotEmpty()
 
-        val bgColor = sound.backgroundColor?.let { hex ->
-            try {
-                Color.parseColor(hex)
-            } catch (_: Exception) {
-                null
+            val hasImage = sound.imageUri != null
+            if (hasImage) {
+                holder.binding.buttonImage.isVisible = true
+                holder.binding.buttonImage.setImageURI(sound.imageUri)
+            } else {
+                holder.binding.buttonImage.setImageDrawable(null)
+                holder.binding.buttonImage.isVisible = false
             }
-        }
-        if (bgColor != null) {
-            holder.binding.root.setCardBackgroundColor(bgColor)
-        } else {
-            val tv = TypedValue()
-            theme.resolveAttribute(com.google.android.material.R.attr.colorSurface, tv, true)
-            holder.binding.root.setCardBackgroundColor(tv.data)
-        }
+            val textColor = if (hasImage) {
+                Color.WHITE
+            } else {
+                val tv = TypedValue()
+                theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurface, tv, true)
+                tv.data
+            }
+            holder.binding.buttonName.setTextColor(textColor)
+            holder.binding.buttonCategories.setTextColor(textColor)
 
-        if (sound.id == playingId) {
-            val tv = TypedValue()
-            theme.resolveAttribute(androidx.appcompat.R.attr.colorPrimary, tv, true)
-            holder.binding.root.setStrokeColor(tv.data)
-            holder.binding.root.setStrokeWidth(6)
-        } else {
-            holder.binding.root.setStrokeWidth(0)
+            val bgColor = sound.backgroundColor?.let { hex ->
+                try {
+                    Color.parseColor(hex)
+                } catch (_: Exception) {
+                    null
+                }
+            }
+            if (bgColor != null) {
+                holder.binding.root.setCardBackgroundColor(bgColor)
+            } else {
+                val tv = TypedValue()
+                theme.resolveAttribute(com.google.android.material.R.attr.colorSurface, tv, true)
+                holder.binding.root.setCardBackgroundColor(tv.data)
+            }
+
+            if (sound.id == playingId) {
+                val tv = TypedValue()
+                theme.resolveAttribute(androidx.appcompat.R.attr.colorPrimary, tv, true)
+                holder.binding.root.setStrokeColor(tv.data)
+                holder.binding.root.setStrokeWidth(6)
+            } else {
+                holder.binding.root.setStrokeWidth(0)
+            }
         }
 
         holder.itemView.setOnClickListener { onClick(holder.bindingAdapterPosition) }

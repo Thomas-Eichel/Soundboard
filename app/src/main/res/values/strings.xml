@@ -14,7 +14,6 @@
     <string name="profile_load_error">Fehler beim Laden des Profils</string>
     <string name="profile_load_error_detail">Fehler beim Laden des Profils: %1$s</string>
     <string name="empty_hint">Tippe hier oder über das Menü auf „Kachel hinzufügen“, um eine Kachel anzulegen.\nTippe auf ein Feld, um einen Sound zu hinterlegen; lange tippen zum Bearbeiten, Griff rechts oben zum Verschieben.</string>
-    <string name="add_sound">Sound hinzufügen</string>
     <string name="save">Speichern</string>
     <string name="cancel">Abbrechen</string>
     <string name="delete">Löschen</string>
@@ -43,6 +42,9 @@
     <string name="trim_start_label">Anfang</string>
     <string name="trim_end_label">Ende (bis Dateiende)</string>
     <string name="add_tile">Kachel hinzufügen</string>
+    <string name="add_header">Zwischenüberschrift hinzufügen</string>
+    <string name="header_hint">Titel der Zwischenüberschrift</string>
+    <string name="header_placeholder">Abschnitt</string>
     <string name="drag_handle_desc">Ziehen zum Verschieben</string>
     <string name="lock_reorder">Verschieben sperren</string>
     <string name="unlock_reorder">Verschieben erlauben</string>

@@ -13,5 +13,6 @@ data class Sound(
     val startSec: Double = 0.0,
     val endSec: Double = 0.0,
     val fadeInSec: Double = 0.0,
-    val fadeOutSec: Double = 0.0
+    val fadeOutSec: Double = 0.0,
+    val isHeader: Boolean = false
 )

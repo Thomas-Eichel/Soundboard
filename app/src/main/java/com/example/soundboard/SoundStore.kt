@@ -38,7 +38,8 @@ class SoundStore(context: Context) {
                 startSec = o.optDouble("startSec", 0.0),
                 endSec = o.optDouble("endSec", 0.0),
                 fadeInSec = o.optDouble("fadeInSec", 0.0),
-                fadeOutSec = o.optDouble("fadeOutSec", 0.0)
+                fadeOutSec = o.optDouble("fadeOutSec", 0.0),
+                isHeader = o.optBoolean("isHeader", false)
             )
         }
     }
@@ -59,6 +60,7 @@ class SoundStore(context: Context) {
                     .put("endSec", s.endSec)
                     .put("fadeInSec", s.fadeInSec)
                     .put("fadeOutSec", s.fadeOutSec)
+                    .put("isHeader", s.isHeader)
             )
         }
         prefs.edit().putString(KEY_SOUNDS, arr.toString()).apply()
