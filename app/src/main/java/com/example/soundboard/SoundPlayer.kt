@@ -14,7 +14,7 @@ class SoundPlayer(private val context: Context) {
         context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private val handler = Handler(Looper.getMainLooper())
 
-    private var player: MediaPlayer? = null
+    private var player: MediaPlayer? = MediaPlayer()
     private var focusRequest: AudioFocusRequest? = null
     private var current: Sound? = null
     private var fading = false
@@ -91,20 +91,23 @@ class SoundPlayer(private val context: Context) {
     }
 
     fun play(sound: Sound) {
-        if (sound.uri == null) return
+        val uri = sound.uri ?: return
         stopInternal()
-        requestFocus()
         current = sound
         fading = false
         val p = player ?: MediaPlayer().also { player = it }
-        p.reset()
         p.setAudioAttributes(
             AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
                 .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                 .build()
         )
-        p.setDataSource(context, sound.uri)
+        val path = uri.path
+        if (uri.scheme == "file" && path != null) {
+            p.setDataSource(path)
+        } else {
+            p.setDataSource(context, uri)
+        }
         p.setOnPreparedListener { mp ->
             val startMs = (sound.startSec * 1000.0).toLong()
             if (startMs > 0) {
@@ -120,6 +123,7 @@ class SoundPlayer(private val context: Context) {
                 setVolumeSafe(1f)
             }
             mp.start()
+            requestFocus()
             if (fadeInMs > 0) {
                 startFade(0f, 1f, fadeInMs, stopAtEnd = false)
             }
