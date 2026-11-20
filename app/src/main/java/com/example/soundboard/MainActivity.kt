@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
                 if (local != null) {
                     pickedUri = local
                     editDialog?.pickedFile?.text = label
-                    editDialog?.let { setupTrimControls(it, local, 0.0, 0.0) }
+                    editDialog?.let { setupTrimControls(it, local, 0.0, 0.0, 0.0, 0.0) }
                 } else {
                     Toast.makeText(this, R.string.copy_failed, Toast.LENGTH_LONG).show()
                 }
@@ -151,8 +151,11 @@ class MainActivity : AppCompatActivity() {
             onLongClick = { pos ->
                 if (pos >= 0 && pos < sounds.size) showEditDialog(pos)
             },
-            onStartDrag = { holder -> itemTouchHelper.startDrag(holder) }
+            onStartDrag = { holder ->
+                if (!settings.reorderLocked) itemTouchHelper.startDrag(holder)
+            }
         )
+        adapter.dragEnabled = !settings.reorderLocked
         player.onStopped = {
             adapter.playingId = null
             binding.stopButton.isEnabled = false
@@ -208,13 +211,22 @@ class MainActivity : AppCompatActivity() {
         sounds.clear()
         sounds.addAll(store.load())
         binding.stopButton.isEnabled = false
+        adapter.dragEnabled = !settings.reorderLocked
         adapter.notifyDataSetChanged()
         updateEmptyView()
+        invalidateOptionsMenu()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        menu.findItem(R.id.action_toggle_lock)?.setTitle(
+            if (settings.reorderLocked) R.string.unlock_reorder else R.string.lock_reorder
+        )
+        return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -225,6 +237,13 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_add_sound -> {
                 addTile()
+                true
+            }
+            R.id.action_toggle_lock -> {
+                settings.reorderLocked = !settings.reorderLocked
+                store.saveSettings(settings)
+                adapter.dragEnabled = !settings.reorderLocked
+                invalidateOptionsMenu()
                 true
             }
             R.id.action_settings -> {
@@ -257,7 +276,7 @@ class MainActivity : AppCompatActivity() {
     private var idSeq = 0L
 
     private fun newEmptySound() =
-        Sound(System.currentTimeMillis() + idSeq++, "", null, 0.0, true)
+        Sound(System.currentTimeMillis() + idSeq++, "", null, true)
 
     private fun addTile() {
         sounds.add(newEmptySound())
@@ -325,13 +344,17 @@ class MainActivity : AppCompatActivity() {
         val dialogBinding = DialogEditSoundBinding.inflate(layoutInflater)
         editDialog = dialogBinding
         dialogBinding.nameInput.setText(current.name)
-        dialogBinding.durationInput.setText(
-            if (current.durationSec > 0) current.durationSec.toString() else ""
-        )
         dialogBinding.fadeSwitch.isChecked = current.fadeOut
         dialogBinding.pickedFile.text =
             current.uri?.let { displayName(it) } ?: getString(R.string.no_sound_picked)
-        setupTrimControls(dialogBinding, current.uri, current.startSec, current.endSec)
+        setupTrimControls(
+            dialogBinding,
+            current.uri,
+            current.startSec,
+            current.endSec,
+            current.fadeInSec,
+            current.fadeOutSec
+        )
 
         val categoryOptions = listOf(getString(R.string.no_category)) + settings.categories
         setupCategorySpinner(dialogBinding.category1Spinner, categoryOptions, current.category1)
@@ -366,6 +389,20 @@ class MainActivity : AppCompatActivity() {
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
+        dialogBinding.fadeIn.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                updateTrimUi(dialogBinding)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+        dialogBinding.fadeOutLen.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                updateTrimUi(dialogBinding)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
 
         val dialog = AlertDialog.Builder(this)
             .setTitle(if (current.uri == null) R.string.add_sound else R.string.edit_sound)
@@ -373,14 +410,12 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton(R.string.save) { _, _ -> }
             .setNegativeButton(R.string.cancel) { _, _ -> }
             .apply {
-                if (current.uri != null) {
-                    setNeutralButton(R.string.delete) { _, _ ->
-                        deletePrivateMedia(current.uri)
-                        deletePrivateMedia(current.imageUri)
-                        sounds.removeAt(slot)
-                        persist()
-                        adapter.notifyItemRemoved(slot)
-                    }
+                setNeutralButton(R.string.delete) { _, _ ->
+                    deletePrivateMedia(current.uri)
+                    deletePrivateMedia(current.imageUri)
+                    sounds.removeAt(slot)
+                    persist()
+                    adapter.notifyItemRemoved(slot)
                 }
             }
             .create()
@@ -398,15 +433,12 @@ class MainActivity : AppCompatActivity() {
                 }
                 val name = dialogBinding.nameInput.text.toString().trim()
                     .ifEmpty { displayName(uri) }
-                val duration = dialogBinding.durationInput.text.toString()
-                    .replace(',', '.').toDoubleOrNull()?.coerceAtLeast(0.0) ?: 0.0
                 if (uri != current.uri) deletePrivateMedia(current.uri)
                 if (dialogImageUri != current.imageUri) deletePrivateMedia(current.imageUri)
                 sounds[slot] = Sound(
                     id = current.id,
                     name = name,
                     uri = uri,
-                    durationSec = duration,
                     fadeOut = dialogBinding.fadeSwitch.isChecked,
                     category1 = selectedCategory(dialogBinding.category1Spinner, categoryOptions),
                     category2 = selectedCategory(dialogBinding.category2Spinner, categoryOptions),
@@ -419,7 +451,9 @@ class MainActivity : AppCompatActivity() {
                         dialogBinding.trimEnd.progress < dialogBinding.trimEnd.max
                     ) {
                         dialogBinding.trimEnd.progress / 1000.0
-                    } else 0.0
+                    } else 0.0,
+                    fadeInSec = dialogBinding.fadeIn.progress / 1000.0,
+                    fadeOutSec = dialogBinding.fadeOutLen.progress / 1000.0
                 )
                 persist()
                 adapter.notifyItemChanged(slot)
@@ -434,7 +468,9 @@ class MainActivity : AppCompatActivity() {
         dialogBinding: DialogEditSoundBinding,
         uri: Uri?,
         startSec: Double,
-        endSec: Double
+        endSec: Double,
+        fadeInSec: Double,
+        fadeOutSec: Double
     ) {
         val wv = dialogBinding.waveformView
         wv.tag = uri
@@ -443,6 +479,10 @@ class MainActivity : AppCompatActivity() {
         dialogBinding.trimEnd.max = 0
         dialogBinding.trimStart.isEnabled = false
         dialogBinding.trimEnd.isEnabled = false
+        dialogBinding.fadeIn.max = FADE_SLIDER_MAX_MS
+        dialogBinding.fadeOutLen.max = FADE_SLIDER_MAX_MS
+        dialogBinding.fadeIn.progress = (fadeInSec * 1000).toLong().coerceIn(0, FADE_SLIDER_MAX_MS.toLong()).toInt()
+        dialogBinding.fadeOutLen.progress = (fadeOutSec * 1000).toLong().coerceIn(0, FADE_SLIDER_MAX_MS.toLong()).toInt()
         updateTrimUi(dialogBinding)
         if (uri == null) return
         WaveformLoader.load(this, uri) { res ->
@@ -470,6 +510,12 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.trim_start_label) + ": " + String.format("%.1f", s / 1000.0) + " s"
         dialogBinding.trimEndLabel.text =
             getString(R.string.trim_end_label) + ": " + String.format("%.1f", e / 1000.0) + " s"
+        dialogBinding.fadeInLabel.text =
+            getString(R.string.fade_in_label) + ": " +
+                String.format("%.1f", dialogBinding.fadeIn.progress / 1000.0) + " s"
+        dialogBinding.fadeOutLenLabel.text =
+            getString(R.string.fade_out_len_label) + ": " +
+                String.format("%.1f", dialogBinding.fadeOutLen.progress / 1000.0) + " s"
         dialogBinding.waveformView.selStart = if (dur > 0) s.toFloat() / dur else 0f
         dialogBinding.waveformView.selEnd = if (dur > 0) e.toFloat() / dur else 1f
         dialogBinding.waveformView.invalidate()
@@ -535,6 +581,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "MainActivity"
         private const val GRID_COLUMNS = 3
+        private const val FADE_SLIDER_MAX_MS = 10_000
         private val PRESET_COLORS = listOf(
             "#F44336", "#FF9800", "#FFEB3B", "#4CAF50", "#009688",
             "#2196F3", "#673AB7", "#E91E63", "#795548", "#607D8B"

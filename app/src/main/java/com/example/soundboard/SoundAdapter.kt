@@ -23,6 +23,13 @@ class SoundAdapter(
             notifyDataSetChanged()
         }
 
+    var dragEnabled: Boolean = true
+        set(value) {
+            if (field == value) return
+            field = value
+            notifyDataSetChanged()
+        }
+
     class ViewHolder(val binding: ItemSoundBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -86,8 +93,9 @@ class SoundAdapter(
             onLongClick(holder.bindingAdapterPosition)
             true
         }
+        holder.binding.dragHandle.isVisible = dragEnabled
         holder.binding.dragHandle.setOnTouchListener { _, event ->
-            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+            if (event.actionMasked == MotionEvent.ACTION_DOWN && dragEnabled) {
                 onStartDrag(holder)
             }
             true

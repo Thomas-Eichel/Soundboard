@@ -20,6 +20,10 @@ class SoundPlayer(private val context: Context) {
     private var fading = false
     private var fadeSteps = 0
     private var fadeStepIndex = 0
+    private var fadeFrom = 1f
+    private var fadeTo = 0f
+    private var fadeStopAtEnd = false
+    private var lastVolume = 1f
 
     var fadeMs: Long = DEFAULT_FADE_MS
         set(value) {
@@ -42,21 +46,19 @@ class SoundPlayer(private val context: Context) {
             } catch (_: Exception) {
                 -1L
             }
-            val startMs = (c.startSec * 1000.0).toLong()
             val endLimit = when {
                 c.endSec > 0 -> (c.endSec * 1000.0).toLong()
                 total > 0 -> total
                 else -> Long.MAX_VALUE
             }
-            val durLimit =
-                if (c.durationSec > 0) startMs + (c.durationSec * 1000.0).toLong() else Long.MAX_VALUE
-            val remaining = minOf(endLimit, durLimit) - pos
+            val remaining = endLimit - pos
             if (remaining <= 0) {
                 stopInternal()
                 return
             }
-            if (c.fadeOut && !fading && remaining <= fadeMs) {
-                startFade(remaining)
+            val fadeOutMs = if (c.fadeOutSec > 0) (c.fadeOutSec * 1000.0).toLong() else fadeMs
+            if (c.fadeOut && !fading && remaining <= fadeOutMs) {
+                startFade(lastVolume, 0f, remaining, stopAtEnd = true)
             }
             handler.postDelayed(this, WATCHDOG_INTERVAL_MS)
         }
@@ -67,17 +69,29 @@ class SoundPlayer(private val context: Context) {
             val p = player ?: return
             fadeStepIndex++
             if (fadeStepIndex >= fadeSteps) {
-                stopInternal()
+                setVolumeSafe(fadeTo)
+                if (fadeStopAtEnd && fadeTo == 0f) stopInternal() else fading = false
                 return
             }
-            val volume = 1f - fadeStepIndex.toFloat() / fadeSteps
-            try {
-                p.setVolume(volume, volume)
-            } catch (_: Exception) {
+            val t = fadeStepIndex.toFloat() / fadeSteps
+            val volume = fadeFrom + (fadeTo - fadeFrom) * t
+            if (setVolumeSafe(volume)) {
+                handler.postDelayed(this, FADE_STEP_MS)
+            } else if (fadeStopAtEnd && fadeTo == 0f) {
                 stopInternal()
-                return
+            } else {
+                fading = false
             }
-            handler.postDelayed(this, FADE_STEP_MS)
+        }
+    }
+
+    private fun setVolumeSafe(v: Float): Boolean {
+        lastVolume = v
+        return try {
+            player?.setVolume(v, v)
+            true
+        } catch (_: Exception) {
+            false
         }
     }
 
@@ -104,7 +118,14 @@ class SoundPlayer(private val context: Context) {
                 } catch (_: Exception) {
                 }
             }
-            mp.start()
+            val fadeInMs = (sound.fadeInSec * 1000.0).toLong()
+            if (fadeInMs > 0) {
+                setVolumeSafe(0f)
+                mp.start()
+                startFade(0f, 1f, fadeInMs, stopAtEnd = false)
+            } else {
+                mp.start()
+            }
             handler.post(watchdog)
         }
         p.setOnCompletionListener {
@@ -128,11 +149,7 @@ class SoundPlayer(private val context: Context) {
             return
         }
         handler.removeCallbacks(watchdog)
-        handler.removeCallbacks(fadeRunnable)
-        fading = true
-        fadeSteps = (QUICK_FADE_MS / FADE_STEP_MS).toInt().coerceAtLeast(1)
-        fadeStepIndex = 0
-        handler.post(fadeRunnable)
+        startFade(lastVolume, 0f, QUICK_FADE_MS, stopAtEnd = true)
     }
 
     fun release() {
@@ -146,6 +163,10 @@ class SoundPlayer(private val context: Context) {
         fading = false
         fadeSteps = 0
         fadeStepIndex = 0
+        fadeFrom = 1f
+        fadeTo = 0f
+        fadeStopAtEnd = false
+        lastVolume = 1f
     }
 
     private fun requestFocus() {
@@ -172,13 +193,13 @@ class SoundPlayer(private val context: Context) {
         audioManager.requestAudioFocus(request)
     }
 
-    private fun startFade(remainingMs: Long) {
+    private fun startFade(from: Float, to: Float, durationMs: Long, stopAtEnd: Boolean) {
+        handler.removeCallbacks(fadeRunnable)
         fading = true
-        try {
-            player?.setVolume(1f, 1f)
-        } catch (_: Exception) {
-        }
-        fadeSteps = (remainingMs / FADE_STEP_MS).toInt().coerceAtLeast(1)
+        fadeFrom = from
+        fadeTo = to
+        fadeStopAtEnd = stopAtEnd
+        fadeSteps = (durationMs / FADE_STEP_MS).toInt().coerceAtLeast(1)
         fadeStepIndex = 0
         handler.post(fadeRunnable)
     }
@@ -203,6 +224,10 @@ class SoundPlayer(private val context: Context) {
         fading = false
         fadeSteps = 0
         fadeStepIndex = 0
+        fadeFrom = 1f
+        fadeTo = 0f
+        fadeStopAtEnd = false
+        lastVolume = 1f
         if (wasPlaying) onStopped?.invoke()
     }
 

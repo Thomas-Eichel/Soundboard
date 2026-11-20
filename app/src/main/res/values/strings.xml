@@ -20,8 +20,9 @@
     <string name="add">Hinzufügen</string>
     <string name="rename">Umbenennen</string>
     <string name="name_hint">Name des Buttons</string>
-    <string name="duration_hint">Abspieldauer in Sekunden (0 = komplette Datei)</string>
     <string name="fade_label">Smooth ausblenden statt hart abbrechen</string>
+    <string name="fade_in_label">Fade-In (Sekunden, 0 = aus)</string>
+    <string name="fade_out_len_label">Fade-Out-Dauer (Sekunden, 0 = globale Dauer)</string>
     <string name="pick_sound">Sound-Datei wählen (MP3)</string>
     <string name="no_sound_picked">Noch keine Datei gewählt</string>
     <string name="pick_sound_first">Bitte zuerst eine Sound-Datei wählen</string>
@@ -45,4 +46,6 @@
     <string name="trim_end_label">Ende (bis Dateiende)</string>
     <string name="add_tile">Kachel hinzufügen</string>
     <string name="drag_handle_desc">Ziehen zum Verschieben</string>
+    <string name="lock_reorder">Verschieben sperren</string>
+    <string name="unlock_reorder">Verschieben erlauben</string>
 </resources>

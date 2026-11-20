@@ -21,19 +21,6 @@
                 android:inputType="text" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/duration_hint">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/durationInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
-        </com.google.android.material.textfield.TextInputLayout>
-
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/fadeSwitch"
             android:layout_width="match_parent"
@@ -163,6 +150,32 @@
 
         <SeekBar
             android:id="@+id/trimEnd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/fadeInLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/fade_in_label"
+            android:textAppearance="?attr/textAppearanceBodySmall" />
+
+        <SeekBar
+            android:id="@+id/fadeIn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/fadeOutLenLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/fade_out_len_label"
+            android:textAppearance="?attr/textAppearanceBodySmall" />
+
+        <SeekBar
+            android:id="@+id/fadeOutLen"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 

@@ -55,7 +55,6 @@ class ProfileStore(private val context: Context) {
                                 .put("slot", slot)
                                 .put("id", s.id)
                                 .put("name", s.name)
-                                .put("durationSec", s.durationSec)
                                 .put("fadeOut", s.fadeOut)
                                 .put("category1", s.category1 ?: "")
                                 .put("category2", s.category2 ?: "")
@@ -64,6 +63,8 @@ class ProfileStore(private val context: Context) {
                                 .put("imageEntry", imageEntry)
                                 .put("startSec", s.startSec)
                                 .put("endSec", s.endSec)
+                                .put("fadeInSec", s.fadeInSec)
+                                .put("fadeOutSec", s.fadeOutSec)
                         )
                     }
                     val root = JSONObject()
@@ -73,6 +74,7 @@ class ProfileStore(private val context: Context) {
                         JSONObject()
                             .put("fadeMs", settings.fadeMs)
                             .put("categories", JSONArray(settings.categories))
+                            .put("reorderLocked", settings.reorderLocked)
                     )
                     root.put("sounds", arr)
                     zip.putNextEntry(ZipEntry("profile.json"))
@@ -141,7 +143,8 @@ class ProfileStore(private val context: Context) {
                 }
                 val settings = AppSettings(
                     fadeMs = settingsObj.optLong("fadeMs", SoundStore.DEFAULT_FADE_MS),
-                    categories = categories
+                    categories = categories,
+                    reorderLocked = settingsObj.optBoolean("reorderLocked", false)
                 )
                 val slots = mutableListOf<Sound>()
                 val arr = json.getJSONArray("sounds")
@@ -155,10 +158,7 @@ class ProfileStore(private val context: Context) {
                                 System.currentTimeMillis() + slots.size,
                                 "",
                                 null,
-                                0.0,
-                                true,
-                                null,
-                                null
+                                true
                             )
                         )
                     }
@@ -174,7 +174,6 @@ class ProfileStore(private val context: Context) {
                         uri = if (file != null && file.exists() && file.length() > 0) {
                             Uri.fromFile(file)
                         } else null,
-                        durationSec = o.optDouble("durationSec", 0.0),
                         fadeOut = o.optBoolean("fadeOut", true),
                         category1 = o.optNullableString("category1"),
                         category2 = o.optNullableString("category2"),
@@ -183,7 +182,9 @@ class ProfileStore(private val context: Context) {
                             Uri.fromFile(imageFile)
                         } else null,
                         startSec = o.optDouble("startSec", 0.0),
-                        endSec = o.optDouble("endSec", 0.0)
+                        endSec = o.optDouble("endSec", o.optDouble("durationSec", 0.0)),
+                        fadeInSec = o.optDouble("fadeInSec", 0.0),
+                        fadeOutSec = o.optDouble("fadeOutSec", 0.0)
                     )
                 }
                 result = ProfileResult(settings, slots)
