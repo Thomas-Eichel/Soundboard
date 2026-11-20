@@ -108,7 +108,6 @@ class MainActivity : AppCompatActivity() {
                     player.stop()
                     settings = result.settings
                     store.saveSettings(settings)
-                    player.fadeMs = settings.fadeMs
                     sounds.clear()
                     sounds.addAll(result.sounds)
                     store.save(sounds)
@@ -132,7 +131,6 @@ class MainActivity : AppCompatActivity() {
         player = SoundPlayer(this)
 
         settings = store.loadSettings()
-        player.fadeMs = settings.fadeMs
 
         sounds.addAll(store.load())
         migrateContentUrisToPrivate()
@@ -207,7 +205,6 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         settings = store.loadSettings()
-        player.fadeMs = settings.fadeMs
         sounds.clear()
         sounds.addAll(store.load())
         binding.stopButton.isEnabled = false
@@ -276,7 +273,7 @@ class MainActivity : AppCompatActivity() {
     private var idSeq = 0L
 
     private fun newEmptySound() =
-        Sound(System.currentTimeMillis() + idSeq++, "", null, true)
+        Sound(System.currentTimeMillis() + idSeq++, "", null)
 
     private fun addTile() {
         sounds.add(newEmptySound())
@@ -344,7 +341,6 @@ class MainActivity : AppCompatActivity() {
         val dialogBinding = DialogEditSoundBinding.inflate(layoutInflater)
         editDialog = dialogBinding
         dialogBinding.nameInput.setText(current.name)
-        dialogBinding.fadeSwitch.isChecked = current.fadeOut
         dialogBinding.pickedFile.text =
             current.uri?.let { displayName(it) } ?: getString(R.string.no_sound_picked)
         setupTrimControls(
@@ -405,11 +401,11 @@ class MainActivity : AppCompatActivity() {
         })
 
         val dialog = AlertDialog.Builder(this)
-            .setTitle(if (current.uri == null) R.string.add_sound else R.string.edit_sound)
             .setView(dialogBinding.root)
             .setPositiveButton(R.string.save) { _, _ -> }
             .setNegativeButton(R.string.cancel) { _, _ -> }
             .apply {
+                if (current.uri == null) setTitle(R.string.add_sound)
                 setNeutralButton(R.string.delete) { _, _ ->
                     deletePrivateMedia(current.uri)
                     deletePrivateMedia(current.imageUri)
@@ -439,7 +435,6 @@ class MainActivity : AppCompatActivity() {
                     id = current.id,
                     name = name,
                     uri = uri,
-                    fadeOut = dialogBinding.fadeSwitch.isChecked,
                     category1 = selectedCategory(dialogBinding.category1Spinner, categoryOptions),
                     category2 = selectedCategory(dialogBinding.category2Spinner, categoryOptions),
                     backgroundColor = dialogColor,

@@ -13,16 +13,14 @@
     <string name="profile_load_error_detail">Fehler beim Laden des Profils: %1$s</string>
     <string name="empty_hint">Tippe hier oder über das Menü auf „Kachel hinzufügen“, um eine Kachel anzulegen.\nTippe auf ein Feld, um einen Sound zu hinterlegen; lange tippen zum Bearbeiten, Griff rechts oben zum Verschieben.</string>
     <string name="add_sound">Sound hinzufügen</string>
-    <string name="edit_sound">Sound bearbeiten</string>
     <string name="save">Speichern</string>
     <string name="cancel">Abbrechen</string>
     <string name="delete">Löschen</string>
     <string name="add">Hinzufügen</string>
     <string name="rename">Umbenennen</string>
     <string name="name_hint">Name des Buttons</string>
-    <string name="fade_label">Smooth ausblenden statt hart abbrechen</string>
-    <string name="fade_in_label">Fade-In (Sekunden, 0 = aus)</string>
-    <string name="fade_out_len_label">Fade-Out-Dauer (Sekunden, 0 = globale Dauer)</string>
+    <string name="fade_in_label">Fade-In (s)</string>
+    <string name="fade_out_len_label">Fade-Out (s)</string>
     <string name="pick_sound">Sound-Datei wählen (MP3)</string>
     <string name="no_sound_picked">Noch keine Datei gewählt</string>
     <string name="pick_sound_first">Bitte zuerst eine Sound-Datei wählen</string>
@@ -34,14 +32,12 @@
     <string name="category_name_hint">Name der Kategorie</string>
     <string name="category_exists">Kategorie existiert bereits</string>
     <string name="no_categories_yet">Noch keine Kategorien</string>
-    <string name="fade_ms_label">Fade-Out-Dauer</string>
-    <string name="fade_ms_hint">Fade-Dauer in Millisekunden</string>
-    <string name="design_label">Kachel-Design (Farbe oder Grafik)</string>
-    <string name="pick_image">Grafik wählen</string>
+    <string name="design_label">Kachel-Farbe</string>
+    <string name="pick_image">Kachel-Grafik wählen</string>
     <string name="clear_image">Grafik entfernen</string>
     <string name="no_image_picked">Keine Grafik gewählt</string>
     <string name="copy_failed">Datei konnte nicht gelesen werden — bitte erneut wählen</string>
-    <string name="trim_section_label">Ausschnitt wählen (Welle)</string>
+    <string name="trim_section_label">Ausschnitt wählen</string>
     <string name="trim_start_label">Anfang</string>
     <string name="trim_end_label">Ende (bis Dateiende)</string>
     <string name="add_tile">Kachel hinzufügen</string>

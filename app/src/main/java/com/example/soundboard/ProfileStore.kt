@@ -55,7 +55,6 @@ class ProfileStore(private val context: Context) {
                                 .put("slot", slot)
                                 .put("id", s.id)
                                 .put("name", s.name)
-                                .put("fadeOut", s.fadeOut)
                                 .put("category1", s.category1 ?: "")
                                 .put("category2", s.category2 ?: "")
                                 .put("backgroundColor", s.backgroundColor ?: JSONObject.NULL)
@@ -72,7 +71,6 @@ class ProfileStore(private val context: Context) {
                     root.put(
                         "settings",
                         JSONObject()
-                            .put("fadeMs", settings.fadeMs)
                             .put("categories", JSONArray(settings.categories))
                             .put("reorderLocked", settings.reorderLocked)
                     )
@@ -142,7 +140,6 @@ class ProfileStore(private val context: Context) {
                     for (i in 0 until arr.length()) categories.add(arr.getString(i))
                 }
                 val settings = AppSettings(
-                    fadeMs = settingsObj.optLong("fadeMs", SoundStore.DEFAULT_FADE_MS),
                     categories = categories,
                     reorderLocked = settingsObj.optBoolean("reorderLocked", false)
                 )
@@ -157,8 +154,7 @@ class ProfileStore(private val context: Context) {
                             Sound(
                                 System.currentTimeMillis() + slots.size,
                                 "",
-                                null,
-                                true
+                                null
                             )
                         )
                     }
@@ -174,7 +170,6 @@ class ProfileStore(private val context: Context) {
                         uri = if (file != null && file.exists() && file.length() > 0) {
                             Uri.fromFile(file)
                         } else null,
-                        fadeOut = o.optBoolean("fadeOut", true),
                         category1 = o.optNullableString("category1"),
                         category2 = o.optNullableString("category2"),
                         backgroundColor = o.optNullableString("backgroundColor"),

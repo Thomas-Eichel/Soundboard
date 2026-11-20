@@ -25,11 +25,6 @@ class SoundPlayer(private val context: Context) {
     private var fadeStopAtEnd = false
     private var lastVolume = 1f
 
-    var fadeMs: Long = DEFAULT_FADE_MS
-        set(value) {
-            field = value.coerceIn(50L, 10_000L)
-        }
-
     var onStopped: (() -> Unit)? = null
 
     private val watchdog = object : Runnable {
@@ -56,8 +51,8 @@ class SoundPlayer(private val context: Context) {
                 stopInternal()
                 return
             }
-            val fadeOutMs = if (c.fadeOutSec > 0) (c.fadeOutSec * 1000.0).toLong() else fadeMs
-            if (c.fadeOut && !fading && remaining <= fadeOutMs) {
+            val fadeOutMs = (c.fadeOutSec * 1000.0).toLong()
+            if (c.fadeOutSec > 0 && !fading && remaining <= fadeOutMs) {
                 startFade(lastVolume, 0f, remaining, stopAtEnd = true)
             }
             handler.postDelayed(this, WATCHDOG_INTERVAL_MS)
@@ -118,13 +113,11 @@ class SoundPlayer(private val context: Context) {
                 } catch (_: Exception) {
                 }
             }
+            mp.start()
             val fadeInMs = (sound.fadeInSec * 1000.0).toLong()
             if (fadeInMs > 0) {
                 setVolumeSafe(0f)
-                mp.start()
                 startFade(0f, 1f, fadeInMs, stopAtEnd = false)
-            } else {
-                mp.start()
             }
             handler.post(watchdog)
         }
@@ -232,7 +225,6 @@ class SoundPlayer(private val context: Context) {
     }
 
     companion object {
-        private const val DEFAULT_FADE_MS = 500L
         private const val FADE_STEP_MS = 25L
         private const val WATCHDOG_INTERVAL_MS = 50L
         private const val QUICK_FADE_MS = 120L

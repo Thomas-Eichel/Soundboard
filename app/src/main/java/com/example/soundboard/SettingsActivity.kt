@@ -26,15 +26,12 @@ class SettingsActivity : AppCompatActivity() {
         settings = store.loadSettings()
         sounds.addAll(store.load())
 
-        binding.fadeMsInput.setText(settings.fadeMs.toString())
         binding.addCategoryButton.setOnClickListener { showAddCategoryDialog() }
         rebuildCategoryList()
     }
 
     override fun onPause() {
         super.onPause()
-        val ms = binding.fadeMsInput.text.toString().toLongOrNull() ?: settings.fadeMs
-        settings.fadeMs = ms.coerceIn(50L, 10_000L)
         store.saveSettings(settings)
         store.save(sounds)
     }

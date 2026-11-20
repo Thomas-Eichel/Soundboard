@@ -6,7 +6,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 data class AppSettings(
-    var fadeMs: Long = SoundStore.DEFAULT_FADE_MS,
     val categories: MutableList<String> = mutableListOf(),
     var reorderLocked: Boolean = false
 )
@@ -32,7 +31,6 @@ class SoundStore(context: Context) {
                 id = o.getLong("id"),
                 name = o.getString("name"),
                 uri = o.optNullableString("uri")?.let { Uri.parse(it) },
-                fadeOut = o.optBoolean("fadeOut", true),
                 category1 = o.optNullableString("category1"),
                 category2 = o.optNullableString("category2"),
                 backgroundColor = o.optNullableString("backgroundColor"),
@@ -53,7 +51,6 @@ class SoundStore(context: Context) {
                     .put("id", s.id)
                     .put("name", s.name)
                     .put("uri", s.uri?.toString() ?: "")
-                    .put("fadeOut", s.fadeOut)
                     .put("category1", s.category1 ?: "")
                     .put("category2", s.category2 ?: "")
                     .put("backgroundColor", s.backgroundColor ?: "")
@@ -75,7 +72,6 @@ class SoundStore(context: Context) {
             for (i in 0 until arr.length()) categories.add(arr.getString(i))
         }
         return AppSettings(
-            fadeMs = o.optLong("fadeMs", DEFAULT_FADE_MS),
             categories = categories,
             reorderLocked = o.optBoolean("reorderLocked", false)
         )
@@ -83,14 +79,12 @@ class SoundStore(context: Context) {
 
     fun saveSettings(settings: AppSettings) {
         val o = JSONObject()
-            .put("fadeMs", settings.fadeMs)
             .put("categories", JSONArray(settings.categories))
             .put("reorderLocked", settings.reorderLocked)
         prefs.edit().putString(KEY_SETTINGS, o.toString()).apply()
     }
 
     companion object {
-        const val DEFAULT_FADE_MS = 500L
         private const val PREFS_NAME = "soundboard"
         private const val KEY_SOUNDS = "sounds"
         private const val KEY_SETTINGS = "settings"

@@ -7,9 +7,8 @@ Einfache Android-Soundboard-App (Kotlin, min. Android 8.0 / API 26).
 - Sound-Buttons im Raster (3 Spalten), beliebig viele Kacheln: ueber das Menue **Kachel hinzufuegen**, per **Löschen** im Bearbeiten-Dialog entfernen, per **Drag & Drop** (Griff rechts oben) verschieben — die Reihenfolge wird persistiert und das Verschieben kann im Menue **gesperrt** werden
 - Pro Button: MP3-/Audiodatei hinterlegen (per Dateiauswahl, URI wird persistent gespeichert)
 - Pro Button einstellbar:
-  - **Ausschnitt per Welle waehlbar**: Wellenform im Bearbeiten-Dialog, Anfang/Ende ueber zwei Schieberegler (`startSec`/`endSec` in Sekunden, `0` = Dateianfang bzw. Dateiende)
-  - **Fade-In/Fade-Out-Dauer** ueber zwei weitere Schieberegler (`fadeInSec`/`fadeOutSec`, `0` = aus); Fade-Out greift bei aktivem Schalter „smooth ausblenden“ mit `fadeOutSec` (sonst globale Fade-Dauer aus den Einstellungen)
-  - **Hart abbrechen** oder **smooth ausblenden**
+  - **Ausschnitt waehlbar**: Wellenform im Bearbeiten-Dialog, Anfang/Ende ueber zwei Schieberegler (`startSec`/`endSec` in Sekunden, `0` = Dateianfang bzw. Dateiende)
+  - **Fade-In/Fade-Out** ueber zwei weitere Schieberegler nebeneinander (`fadeInSec`/`fadeOutSec` in Sekunden, `0` = aus / hart stoppen)
 - Tap auf belegtes Feld = abspielen; Tap auf leeres Feld oder langer Tap = bearbeiten
 - Menuepunkt **Alle stoppen**
 
@@ -26,10 +25,11 @@ Lautstaerke reduziert.
 
 ## Abspiel-Logik
 
-`SoundPlayer` nutzt einen Watchdog (alle 50 ms), der die Restzeit berechnet
-(min aus eingestellter Dauer und Dateilaenge). Bei gesetztem Dauerlimit wird
-darauf hart gestoppt; ist "Smooth ausblenden" aktiv, startet in den letzten
-500 ms ein Fade-Out (Lautstaerke-Rampe auf 0) und danach Stop + Fokusfreigabe.
+`SoundPlayer` nutzt einen Watchdog (alle 50 ms), der die Restzeit bis zum
+gewaehlten Ende (`endSec`, sonst Dateiende) berechnet. Bei `fadeOutSec > 0`
+startet im letzten Abschnitt ein Fade-Out (Lautstaerke-Rampe auf 0) und danach
+Stop + Fokusfreigabe; bei `fadeInSec > 0` wird nach dem Start auf `startSec`
+von 0 hochgeblendet.
 
 ## Build
 
@@ -41,7 +41,7 @@ darauf hart gestoppt; ist "Smooth ausblenden" aktiv, startet in den letzten
 
 ## Einstellungen, Kategorien und Profile
 
-- Menue **Einstellungen** (`SettingsActivity`): zentrale Liste der Kategorien verwalten (hinzufuegen / umbenennen / loeschen — Aenderungen werden auf alle Sounds uebernommen) sowie globale **Fade-Out-Dauer** in ms
+- Menue **Einstellungen** (`SettingsActivity`): zentrale Liste der Kategorien verwalten (hinzufuegen / umbenennen / loeschen — Aenderungen werden auf alle Sounds uebernommen)
 - Pro Sound koennen im Bearbeiten-Dialog **zwei Kategorien** aus der zentralen Liste vergeben werden; sie werden auf der Kachel angezeigt
 - **Kachel-Design pro Sound**: Akzentfarbe (Preset-Farbwähler) oder Grafikdatei (Bild), Text wird bei Grafik weiss; im Profil-ZIP enthalten (`backgroundColor` + `image/<slot>.bin`)
 - Menue **Profil exportieren / Profil laden**: komplettes Profil als eine ZIP-Datei (`soundboard-profil.zip`) ueber den System-Dateidialog. Inhalt: `profile.json` (Version, Einstellungen inkl. `reorderLocked`, alle Kacheln in Reihenfolge mit Name/Fade/Kategorien/Ausschnitt `startSec`/`endSec`/`fadeInSec`/`fadeOutSec`/Design) + `audio/<slot>.mp3` (eingebettete Audiodaten). Beim Laden werden die MP3s ins app-private Verzeichnis entpackt — das Profil ist damit geraeteuebergreifend nutzbar
@@ -50,8 +50,8 @@ darauf hart gestoppt; ist "Smooth ausblenden" aktiv, startet in den letzten
 ## Projektstruktur
 
 - `MainActivity.kt` – UI, Dateiauswahl, Bearbeiten-Dialog, Profil-Import/Export
-- `SettingsActivity.kt` – zentrale Kategorien + globale Fade-Dauer
+- `SettingsActivity.kt` – zentrale Kategorien
 - `ProfileStore.kt` – Profil als ZIP (JSON + eingebettete MP3s) exportieren/laden
-- `SoundPlayer.kt` – MediaPlayer + AudioFocus + Dauerlimit/Fade-Out
+- `SoundPlayer.kt` – MediaPlayer + AudioFocus + Ausschnitt (startSec/endSec) + Fade-In/Fade-Out
 - `SoundStore.kt` – Speicherung von Sounds + Einstellungen in SharedPreferences (JSON)
 - `SoundAdapter.kt` – RecyclerView-Adapter fuer die Button-Kacheln inkl. Kategorie-Anzeige

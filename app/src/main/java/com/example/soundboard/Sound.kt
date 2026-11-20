@@ -6,7 +6,6 @@ data class Sound(
     val id: Long,
     val name: String,
     val uri: Uri?,
-    val fadeOut: Boolean,
     val category1: String? = null,
     val category2: String? = null,
     val backgroundColor: String? = null,

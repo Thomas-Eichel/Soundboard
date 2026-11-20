@@ -25,26 +25,6 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/fade_ms_label"
-                android:textAppearance="?attr/textAppearanceBodyLarge" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:hint="@string/fade_ms_hint">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/fadeMsInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="number" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
                 android:text="@string/categories_label"
                 android:textAppearance="?attr/textAppearanceBodyLarge" />
 
