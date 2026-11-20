@@ -133,6 +133,11 @@ class SoundAdapter(
             onLongClick(holder.bindingAdapterPosition)
             true
         }
+        holder.itemView.setOnClickListener { onClick(holder.bindingAdapterPosition) }
+        holder.itemView.setOnLongClickListener {
+            onLongClick(holder.bindingAdapterPosition)
+            true
+        }
         holder.binding.dragHandle.isVisible = dragEnabled
         holder.binding.dragHandle.setOnTouchListener { _, event ->
             if (event.actionMasked == MotionEvent.ACTION_DOWN && dragEnabled) {
