@@ -171,7 +171,12 @@ class SoundPlayer(private val context: Context) {
     }
 
     private fun requestFocus() {
-        val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+        val gainType = if (current?.bgDuckPercent == 0) {
+            AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
+        } else {
+            AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+        }
+        val request = AudioFocusRequest.Builder(gainType)
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)

@@ -40,6 +40,9 @@ class SoundStore(context: Context) {
                 endSec = o.optDouble("endSec", 0.0),
                 fadeInSec = o.optDouble("fadeInSec", 0.0),
                 fadeOutSec = o.optDouble("fadeOutSec", 0.0),
+                bgFadeOutSec = o.optDouble("bgFadeOutSec", 0.0),
+                bgFadeInSec = o.optDouble("bgFadeInSec", 0.0),
+                bgDuckPercent = if (o.optInt("bgDuckPercent", 25) == 0) 0 else 25,
                 isHeader = o.optBoolean("isHeader", false)
             )
         }
@@ -61,6 +64,9 @@ class SoundStore(context: Context) {
                     .put("endSec", s.endSec)
                     .put("fadeInSec", s.fadeInSec)
                     .put("fadeOutSec", s.fadeOutSec)
+                    .put("bgFadeOutSec", s.bgFadeOutSec)
+                    .put("bgFadeInSec", s.bgFadeInSec)
+                    .put("bgDuckPercent", s.bgDuckPercent)
                     .put("isHeader", s.isHeader)
             )
         }

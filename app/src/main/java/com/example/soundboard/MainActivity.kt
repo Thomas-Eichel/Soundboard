@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
+import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.media.MediaMetadataRetriever
 import android.media.MediaRecorder
@@ -557,6 +558,14 @@ class MainActivity : AppCompatActivity() {
             current.fadeInSec,
             current.fadeOutSec
         )
+        dialogBinding.bgFadeOut.max = FADE_SLIDER_MAX_MS
+        dialogBinding.bgFadeIn.max = FADE_SLIDER_MAX_MS
+        dialogBinding.bgFadeOut.progress =
+            (current.bgFadeOutSec * 1000).toLong().coerceIn(0, FADE_SLIDER_MAX_MS.toLong()).toInt()
+        dialogBinding.bgFadeIn.progress =
+            (current.bgFadeInSec * 1000).toLong().coerceIn(0, FADE_SLIDER_MAX_MS.toLong()).toInt()
+        dialogBinding.bgDuckSwitch.isChecked = current.bgDuckPercent == 0
+        updateBgMusicUi(dialogBinding)
 
         val categoryOptions = listOf(getString(R.string.no_category)) + settings.categories
         setupCategorySpinner(dialogBinding.category1Spinner, categoryOptions, current.category1)
@@ -605,6 +614,23 @@ class MainActivity : AppCompatActivity() {
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
+        dialogBinding.bgFadeOut.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                updateBgMusicUi(dialogBinding)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+        dialogBinding.bgFadeIn.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                updateBgMusicUi(dialogBinding)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+        dialogBinding.bgDuckSwitch.setOnCheckedChangeListener { _, _ ->
+            updateBgMusicUi(dialogBinding)
+        }
 
         val dialog = AlertDialog.Builder(this)
             .setView(dialogBinding.root)
@@ -678,7 +704,10 @@ class MainActivity : AppCompatActivity() {
                         dialogBinding.trimEnd.progress / 1000.0
                     } else 0.0,
                     fadeInSec = dialogBinding.fadeIn.progress / 1000.0,
-                    fadeOutSec = dialogBinding.fadeOutLen.progress / 1000.0
+                    fadeOutSec = dialogBinding.fadeOutLen.progress / 1000.0,
+                    bgFadeOutSec = dialogBinding.bgFadeOut.progress / 1000.0,
+                    bgFadeInSec = dialogBinding.bgFadeIn.progress / 1000.0,
+                    bgDuckPercent = if (dialogBinding.bgDuckSwitch.isChecked) 0 else 25
                 )
                 persist()
                 loadDurations()
@@ -805,6 +834,18 @@ class MainActivity : AppCompatActivity() {
         dialogBinding.waveformView.selStart = if (dur > 0) s.toFloat() / dur else 0f
         dialogBinding.waveformView.selEnd = if (dur > 0) e.toFloat() / dur else 1f
         dialogBinding.waveformView.invalidate()
+    }
+
+    private fun updateBgMusicUi(dialogBinding: DialogEditSoundBinding) {
+        dialogBinding.bgFadeOutLabel.text =
+            getString(R.string.bg_fade_out_label) + ": " +
+                String.format("%.1f", dialogBinding.bgFadeOut.progress / 1000.0) + " s"
+        dialogBinding.bgFadeInLabel.text =
+            getString(R.string.bg_fade_in_label) + ": " +
+                String.format("%.1f", dialogBinding.bgFadeIn.progress / 1000.0) + " s"
+        val pause = dialogBinding.bgDuckSwitch.isChecked
+        dialogBinding.bgDuck25.setTypeface(if (pause) Typeface.DEFAULT else Typeface.DEFAULT_BOLD)
+        dialogBinding.bgDuck0.setTypeface(if (pause) Typeface.DEFAULT_BOLD else Typeface.DEFAULT)
     }
 
     private fun rebuildColorRow(dialogBinding: DialogEditSoundBinding) {
