@@ -58,11 +58,7 @@
     <string name="drag_handle_desc">Ziehen zum Verschieben</string>
     <string name="lock_reorder">Verschieben sperren</string>
     <string name="unlock_reorder">Verschieben erlauben</string>
-    <string name="bg_music_section_label">Hintergrundmusik</string>
-    <string name="bg_fade_out_label">Fade-Out (s)</string>
-    <string name="bg_fade_in_label">Fade-In (s)</string>
-    <string name="bg_duck_label">Pegel</string>
+    <string name="bg_music_section_label">Pegel Hintergrundmusik</string>
     <string name="bg_duck_25">25%</string>
     <string name="bg_duck_0">0%</string>
-    <string name="bg_music_hint">Beim Abspielen wird die Hintergrundmusik auf den gewählten Pegel abgesenkt: 25% = Duck, 0% = Pause.</string>
 </resources>

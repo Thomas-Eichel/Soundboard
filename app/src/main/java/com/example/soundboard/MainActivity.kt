@@ -558,12 +558,6 @@ class MainActivity : AppCompatActivity() {
             current.fadeInSec,
             current.fadeOutSec
         )
-        dialogBinding.bgFadeOut.max = FADE_SLIDER_MAX_MS
-        dialogBinding.bgFadeIn.max = FADE_SLIDER_MAX_MS
-        dialogBinding.bgFadeOut.progress =
-            (current.bgFadeOutSec * 1000).toLong().coerceIn(0, FADE_SLIDER_MAX_MS.toLong()).toInt()
-        dialogBinding.bgFadeIn.progress =
-            (current.bgFadeInSec * 1000).toLong().coerceIn(0, FADE_SLIDER_MAX_MS.toLong()).toInt()
         dialogBinding.bgDuckSwitch.isChecked = current.bgDuckPercent == 0
         updateBgMusicUi(dialogBinding)
 
@@ -610,20 +604,6 @@ class MainActivity : AppCompatActivity() {
         dialogBinding.fadeOutLen.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 updateTrimUi(dialogBinding)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
-        dialogBinding.bgFadeOut.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                updateBgMusicUi(dialogBinding)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
-        dialogBinding.bgFadeIn.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                updateBgMusicUi(dialogBinding)
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
@@ -705,8 +685,6 @@ class MainActivity : AppCompatActivity() {
                     } else 0.0,
                     fadeInSec = dialogBinding.fadeIn.progress / 1000.0,
                     fadeOutSec = dialogBinding.fadeOutLen.progress / 1000.0,
-                    bgFadeOutSec = dialogBinding.bgFadeOut.progress / 1000.0,
-                    bgFadeInSec = dialogBinding.bgFadeIn.progress / 1000.0,
                     bgDuckPercent = if (dialogBinding.bgDuckSwitch.isChecked) 0 else 25
                 )
                 persist()
@@ -837,12 +815,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateBgMusicUi(dialogBinding: DialogEditSoundBinding) {
-        dialogBinding.bgFadeOutLabel.text =
-            getString(R.string.bg_fade_out_label) + ": " +
-                String.format("%.1f", dialogBinding.bgFadeOut.progress / 1000.0) + " s"
-        dialogBinding.bgFadeInLabel.text =
-            getString(R.string.bg_fade_in_label) + ": " +
-                String.format("%.1f", dialogBinding.bgFadeIn.progress / 1000.0) + " s"
         val pause = dialogBinding.bgDuckSwitch.isChecked
         dialogBinding.bgDuck25.setTypeface(if (pause) Typeface.DEFAULT else Typeface.DEFAULT_BOLD)
         dialogBinding.bgDuck0.setTypeface(if (pause) Typeface.DEFAULT_BOLD else Typeface.DEFAULT)
