@@ -60,6 +60,7 @@ class SoundAdapter(
             holder.binding.buttonName.text = sound.name.ifEmpty {
                 holder.itemView.context.getString(R.string.header_placeholder)
             }
+            holder.binding.buttonName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
             val tv = TypedValue()
             theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurface, tv, true)
             holder.binding.buttonName.setTextColor((tv.data and 0x00FFFFFF) or 0x99000000.toInt())
@@ -69,6 +70,7 @@ class SoundAdapter(
             val pad = (8 * density).toInt()
             holder.binding.contentLayout.setPadding(pad, pad, pad, pad)
             holder.binding.buttonName.text = sound.name.ifEmpty { "Sound ${position + 1}" }
+            holder.binding.buttonName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
             holder.binding.buttonCategory1.text = sound.category1 ?: ""
             holder.binding.buttonCategory1.isVisible = !sound.category1.isNullOrEmpty()
             holder.binding.buttonCategory2.text = sound.category2 ?: ""
