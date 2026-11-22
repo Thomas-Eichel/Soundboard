@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_add_sound"
+        android:title="@string/add_tile"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_add_header"
+        android:title="@string/add_header"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_toggle_lock"
+        android:title="@string/lock_reorder"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_settings"
+        android:title="@string/settings"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_export_profile"
+        android:title="@string/export_profile"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_import_profile"
+        android:title="@string/import_profile"
+        app:showAsAction="never" />
+
+</menu>

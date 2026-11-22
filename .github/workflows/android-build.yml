@@ -1,0 +1,75 @@
+name: Android Build
+
+on:
+  push:
+    branches:
+      - main
+      - "vibe/**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle 8.7
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: "8.7"
+
+      - name: Set up Android SDK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Restore stable debug keystore (same signature across builds, so updates install over old versions)
+        uses: actions/cache@v4
+        with:
+          path: .ci/debug.keystore
+          key: soundboard-debug-keystore-v2
+
+      - name: Override debug keystore from secret (optional, survives cache eviction)
+        env:
+          KEYSTORE_B64: ${{ secrets.SOUNDBOARD_DEBUG_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            mkdir -p .ci
+            printf '%s' "$KEYSTORE_B64" | base64 -d > .ci/debug.keystore
+          fi
+
+      - name: Generate debug keystore if missing
+        run: |
+          if [ ! -f .ci/debug.keystore ]; then
+            mkdir -p .ci
+            keytool -genkeypair -v -keystore .ci/debug.keystore -storetype PKCS12 \
+              -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass android -keypass android \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Build APKs (debug + release)
+        env:
+          SOUNDBOARD_KEYSTORE: ${{ github.workspace }}/.ci/debug.keystore
+        run: gradle :app:assembleDebug :app:assembleRelease --no-daemon -PversionCode=${{ github.run_number }}
+
+      - name: Print signing certs (diagnostic)
+        run: |
+          echo "keystore sha256: $(sha256sum .ci/debug.keystore | cut -d' ' -f1)"
+          keytool -list -v -keystore .ci/debug.keystore -storepass android 2>/dev/null | grep -i "SHA256" | head -2
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs app/build/outputs/apk/debug/app-debug.apk | grep -i "SHA-256" | head -4
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: apks
+          path: app/build/outputs/apk/*/*.apk
