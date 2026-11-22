@@ -850,7 +850,7 @@ class MainActivity : AppCompatActivity() {
         options: List<String>,
         current: String?
     ) {
-        view.setAdapter(ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options))
+        view.setAdapter(ArrayAdapter(this, R.layout.item_dropdown_category, options))
         val idx = current?.let { options.indexOf(it) } ?: -1
         view.setText(options[if (idx >= 0) idx else 0], false)
     }
