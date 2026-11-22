@@ -162,7 +162,7 @@ class SoundAdapter(
     }
 
     companion object {
-        private const val TILE_HEIGHT_DP = 88
+        private const val TILE_HEIGHT_DP = 86
         private const val HEADER_HEIGHT_DP = 30
         private val DEFAULT_TILE_COLOR = Color.parseColor("#E0E0E0")
 
