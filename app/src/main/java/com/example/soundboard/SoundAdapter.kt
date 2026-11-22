@@ -70,7 +70,7 @@ class SoundAdapter(
             val pad = (8 * density).toInt()
             holder.binding.contentLayout.setPadding(pad, pad, pad, pad)
             holder.binding.buttonName.text = sound.name.ifEmpty { "Sound ${position + 1}" }
-            holder.binding.buttonName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            holder.binding.buttonName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
             holder.binding.buttonCategory1.text = sound.category1 ?: ""
             holder.binding.buttonCategory1.isVisible = !sound.category1.isNullOrEmpty()
             holder.binding.buttonCategory2.text = sound.category2 ?: ""
@@ -162,7 +162,7 @@ class SoundAdapter(
     }
 
     companion object {
-        private const val TILE_HEIGHT_DP = 92
+        private const val TILE_HEIGHT_DP = 88
         private const val HEADER_HEIGHT_DP = 30
         private val DEFAULT_TILE_COLOR = Color.parseColor("#E0E0E0")
 

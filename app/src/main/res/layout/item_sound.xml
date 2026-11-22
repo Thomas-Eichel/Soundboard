@@ -8,7 +8,7 @@
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card"
         android:layout_width="match_parent"
-        android:layout_height="92dp"
+        android:layout_height="88dp"
         android:layout_marginStart="6dp"
         android:layout_marginTop="2dp"
         android:layout_marginEnd="6dp"
@@ -55,7 +55,7 @@
                     android:layout_weight="1"
                     android:ellipsize="end"
                     android:gravity="center"
-                    android:lineHeight="20sp"
+                    android:lineHeight="18sp"
                     android:maxLines="3"
                     android:textAppearance="?attr/textAppearanceTitleMedium" />
 
