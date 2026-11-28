@@ -21,6 +21,7 @@ import android.os.Looper
 import android.provider.OpenableColumns
 import android.text.InputType
 import android.util.Log
+import android.util.TypedValue
 import android.view.Menu
 import android.view.MenuItem
 import android.view.ScaleGestureDetector
@@ -29,8 +30,10 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
 import java.io.File
+import java.util.Calendar
 import java.util.Collections
 import java.util.concurrent.Executors
 import kotlin.concurrent.thread
@@ -362,6 +365,7 @@ class MainActivity : AppCompatActivity() {
         binding.emptyView.setOnClickListener { addTile() }
         updateEmptyView()
         loadDurations()
+        showUsageNotesDialog()
     }
 
     override fun onResume() {
@@ -380,6 +384,42 @@ class MainActivity : AppCompatActivity() {
     private fun applyColumnsFromSettings() {
         (binding.recyclerView.layoutManager as? GridLayoutManager)?.spanCount =
             settings.columns.coerceIn(GRID_COLUMNS, MAX_COLUMNS)
+    }
+
+    private fun showUsageNotesDialog() {
+        val density = resources.displayMetrics.density
+        val messageView = TextView(this).apply {
+            setText(R.string.usage_notes_message)
+        }
+        val footerView = TextView(this).apply {
+            textSize = 11f
+            val color = TypedValue()
+            theme.resolveAttribute(android.R.attr.textColorSecondary, color, true)
+            setTextColor(color.data)
+            setPadding(0, (8 * density).toInt(), 0, 0)
+            text = getString(
+                R.string.usage_notes_footer,
+                BuildConfig.VERSION_NAME,
+                Calendar.getInstance().get(Calendar.YEAR)
+            )
+        }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val horizontal = (24 * density).toInt()
+            setPadding(horizontal, 0, horizontal, 0)
+            addView(messageView)
+            addView(footerView)
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.usage_notes_title)
+            .setView(content)
+            .setPositiveButton(R.string.ok, null)
+            .setCancelable(false)
+            .create()
+        dialog.setOnShowListener {
+            dialog.findViewById<TextView>(android.R.id.title)?.isAllCaps = true
+        }
+        dialog.show()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -409,6 +449,10 @@ class MainActivity : AppCompatActivity() {
                 store.saveSettings(settings)
                 adapter.dragEnabled = !settings.reorderLocked
                 invalidateOptionsMenu()
+                true
+            }
+            R.id.action_usage_notes -> {
+                showUsageNotesDialog()
                 true
             }
             R.id.action_settings -> {
