@@ -362,6 +362,7 @@ class MainActivity : AppCompatActivity() {
         binding.emptyView.setOnClickListener { addTile() }
         updateEmptyView()
         loadDurations()
+        showUsageNotesDialog()
     }
 
     override fun onResume() {
@@ -380,6 +381,21 @@ class MainActivity : AppCompatActivity() {
     private fun applyColumnsFromSettings() {
         (binding.recyclerView.layoutManager as? GridLayoutManager)?.spanCount =
             settings.columns.coerceIn(GRID_COLUMNS, MAX_COLUMNS)
+    }
+
+    private fun showUsageNotesDialog() {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.usage_notes_title)
+            .setMessage(R.string.usage_notes_message)
+            .setPositiveButton(R.string.ok, null)
+            .setCancelable(false)
+            .create()
+        dialog.setOnShowListener {
+            dialog.findViewById<android.widget.TextView>(android.R.id.title)?.let { titleView ->
+                titleView.isAllCaps = true
+            }
+        }
+        dialog.show()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
