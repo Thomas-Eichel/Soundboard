@@ -389,9 +389,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun showUsageNotesDialog() {
         val density = resources.displayMetrics.density
-        val secondaryColor = TypedValue().also {
-            theme.resolveAttribute(android.R.attr.textColorSecondary, it, true)
-        }.data
+        val secondaryAttr = TypedValue()
+        val secondaryColor = if (
+            theme.resolveAttribute(
+                com.google.android.material.R.attr.colorOnSurfaceVariant,
+                secondaryAttr,
+                true
+            ) && secondaryAttr.type >= TypedValue.TYPE_FIRST_COLOR_INT &&
+            secondaryAttr.type <= TypedValue.TYPE_LAST_COLOR_INT
+        ) {
+            secondaryAttr.data
+        } else {
+            ContextCompat.getColor(this, android.R.color.darker_gray)
+        }
         val messageView = TextView(this).apply {
             setText(R.string.usage_notes_message)
             setPadding(0, (12 * density).toInt(), 0, 0)
