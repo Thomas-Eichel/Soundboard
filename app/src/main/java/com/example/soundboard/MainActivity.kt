@@ -388,14 +388,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun showUsageNotesDialog() {
         val density = resources.displayMetrics.density
+        val secondaryColor = TypedValue().also {
+            theme.resolveAttribute(android.R.attr.textColorSecondary, it, true)
+        }.data
         val messageView = TextView(this).apply {
             setText(R.string.usage_notes_message)
+            setPadding(0, (12 * density).toInt(), 0, 0)
+        }
+        val feedbackView = TextView(this).apply {
+            textSize = 12f
+            setTextColor(secondaryColor)
+            setPadding(0, (12 * density).toInt(), 0, 0)
+            setText(R.string.usage_notes_feedback)
         }
         val footerView = TextView(this).apply {
             textSize = 11f
-            val color = TypedValue()
-            theme.resolveAttribute(android.R.attr.textColorSecondary, color, true)
-            setTextColor(color.data)
+            setTextColor(secondaryColor)
             setPadding(0, (8 * density).toInt(), 0, 0)
             text = getString(
                 R.string.usage_notes_footer,
@@ -408,6 +416,7 @@ class MainActivity : AppCompatActivity() {
             val horizontal = (24 * density).toInt()
             setPadding(horizontal, 0, horizontal, 0)
             addView(messageView)
+            addView(feedbackView)
             addView(footerView)
         }
         val dialog = AlertDialog.Builder(this)
