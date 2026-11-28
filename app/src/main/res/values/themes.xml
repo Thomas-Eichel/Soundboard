@@ -9,7 +9,7 @@
     </style>
 
     <style name="Widget.Soundboard.OverflowMenu" parent="Widget.Material3.PopupMenu.Overflow">
-        <item name="android:popupBackground">@color/brand_red</item>
+        <item name="android:popupBackground">@color/menu_red</item>
         <item name="android:textColor">@android:color/white</item>
     </style>
 

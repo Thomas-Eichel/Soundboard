@@ -2,4 +2,5 @@
 <resources>
     <color name="brand_red">#D32F2F</color>
     <color name="brand_red_dark">#B71C1C</color>
+    <color name="menu_red">#C62828</color>
 </resources>
