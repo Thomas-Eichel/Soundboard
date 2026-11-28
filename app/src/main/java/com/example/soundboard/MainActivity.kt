@@ -29,6 +29,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
@@ -421,7 +422,7 @@ class MainActivity : AppCompatActivity() {
         }
         val dialog = AlertDialog.Builder(this)
             .setTitle(R.string.usage_notes_title)
-            .setView(content)
+            .setView(ScrollView(this).apply { addView(content) })
             .setPositiveButton(R.string.ok, null)
             .setCancelable(false)
             .create()
