@@ -21,6 +21,7 @@ import android.os.Looper
 import android.provider.OpenableColumns
 import android.text.InputType
 import android.util.Log
+import android.util.TypedValue
 import android.view.Menu
 import android.view.MenuItem
 import android.view.ScaleGestureDetector
@@ -29,8 +30,10 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
 import java.io.File
+import java.util.Calendar
 import java.util.Collections
 import java.util.concurrent.Executors
 import kotlin.concurrent.thread
@@ -384,16 +387,37 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showUsageNotesDialog() {
+        val density = resources.displayMetrics.density
+        val messageView = TextView(this).apply {
+            setText(R.string.usage_notes_message)
+        }
+        val footerView = TextView(this).apply {
+            textSize = 11f
+            val color = TypedValue()
+            theme.resolveAttribute(android.R.attr.textColorSecondary, color, true)
+            setTextColor(color.data)
+            setPadding(0, (8 * density).toInt(), 0, 0)
+            text = getString(
+                R.string.usage_notes_footer,
+                BuildConfig.VERSION_NAME,
+                Calendar.getInstance().get(Calendar.YEAR)
+            )
+        }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val horizontal = (24 * density).toInt()
+            setPadding(horizontal, 0, horizontal, 0)
+            addView(messageView)
+            addView(footerView)
+        }
         val dialog = AlertDialog.Builder(this)
             .setTitle(R.string.usage_notes_title)
-            .setMessage(R.string.usage_notes_message)
+            .setView(content)
             .setPositiveButton(R.string.ok, null)
             .setCancelable(false)
             .create()
         dialog.setOnShowListener {
-            dialog.findViewById<android.widget.TextView>(android.R.id.title)?.let { titleView ->
-                titleView.isAllCaps = true
-            }
+            dialog.findViewById<TextView>(android.R.id.title)?.isAllCaps = true
         }
         dialog.show()
     }

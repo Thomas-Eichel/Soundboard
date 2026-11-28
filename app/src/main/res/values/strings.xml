@@ -18,6 +18,7 @@
     <string name="ok">OK</string>
     <string name="usage_notes_title">NUTZUNGSHINWEISE</string>
     <string name="usage_notes_menu">Nutzungshinweise</string>
+    <string name="usage_notes_footer">Diese App ist keine offizielle App des Vereins und wird nicht vom Verein betrieben.\nEntwickler: Thomas Eichel \u00b7 Version %1$s \u00b7 \u00a9 %2$d Thomas Eichel</string>
     <string name="usage_notes_message">Bitte beachte, dass in sportlichen Wettk\u00e4mpfen im Allgemeinen Sounds und Einspieler nur nach Spielz\u00fcge bzw. in Pausen eingebracht werden d\u00fcrfen. Unmittelbar nach jeder Aktion d\u00fcrfen im Spiel Jingles ert\u00f6nen, solange sie den Gegner nicht verh\u00f6hnen. Sobald der Schiedsrichter anpfeift, bitte die Stumm/Stopptaste unten bet\u00e4tigen.\n\nFerner beachte die Lizenzbedingungen bei Nutzung von AudioDaten. Das mitgelieferte Sound-Package ist lediglich ein Beispiel f\u00fcr die Funktionsweise und daher nur zu privaten Testzwecken vorgesehen.</string>
     <string name="delete">Löschen</string>
     <string name="add">Hinzufügen</string>
