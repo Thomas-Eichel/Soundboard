@@ -427,6 +427,10 @@ class MainActivity : AppCompatActivity() {
                 invalidateOptionsMenu()
                 true
             }
+            R.id.action_usage_notes -> {
+                showUsageNotesDialog()
+                true
+            }
             R.id.action_settings -> {
                 startActivity(Intent(this, SettingsActivity::class.java))
                 true
